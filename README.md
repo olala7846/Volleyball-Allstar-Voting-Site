@@ -30,3 +30,8 @@ The following tools mush have been installed first
    under /bower
 4. Other static files are keep under ./static and link as /static
 
+## Templates
+1. Flask default use Jinja as template langulage, and default search
+   templates under ./templates folder
+2. to use template inheritence see templates/base.html and
+   templates/helloworld.html

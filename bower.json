@@ -1,0 +1,23 @@
+{
+  "name": "GAE_template",
+  "homepage": "https://github.com/olala7846/GAE-template",
+  "authors": [
+    "hsincheng Chao <olala7846@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "moduleType": [],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.6",
+    "jquery": "~2.2.0"
+  }
+}

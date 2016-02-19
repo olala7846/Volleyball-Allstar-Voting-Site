@@ -9,6 +9,7 @@ Target to use
 
 ## Prerequisits
 The following tools mush have been installed first
+
 1. python pip
 2. python virtualenv
 3. Bower
@@ -35,3 +36,11 @@ The following tools mush have been installed first
    templates under ./templates folder
 2. to use template inheritence see templates/base.html and
    templates/helloworld.html
+
+## Develop & Deploy
+
+to run app locally, run
+`dev_appserver.py <FOLDER_NAME>`
+
+to upload app to GAE
+`appcfg.py -A <YOUR_APP_ID> update <FOLDER_NAME>`

@@ -1,0 +1,27 @@
+{% extends "allstar.html" %}
+{% block morehead %}
+  <link rel="stylesheet" href="/static/all_votings.css">
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="jumbotron">
+        <h1>2016男排全明星賽</h1>
+        <p>bla bla bla</p>
+        <p><a class="btn btn-primary btn-lg" href="">開始投票</a></p>
+      </div>
+    </div>
+
+    {% for vote in content.votings %}
+    <div class="col-sm-6 col-xs-12">
+      <div class="card card-block">
+        <h4>{{vote}}</h4>
+        <p> bla bla bla bla</p>
+        <a class="card-link" href="">haha</a>
+        <a class="card-link" href="">hehe</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% endblock %}

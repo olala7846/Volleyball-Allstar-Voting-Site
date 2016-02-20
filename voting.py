@@ -8,11 +8,12 @@ app = Flask(__name__)
 app.config['DEBUG'] = True  # turn to false on production
 
 
+@app.route("/")
 @app.route("/voting/")
-def all_votings():
+def welcome():
     votings = ['voting1', 'voting2']
     content = {'votings': votings}
-    return render_template('all_votings.html', content=content)
+    return render_template('welcome.html', content=content)
 
 
 @app.route("/voting/<voting_id>")

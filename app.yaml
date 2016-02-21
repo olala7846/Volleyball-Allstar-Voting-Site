@@ -23,6 +23,7 @@ handlers:
   script: voting.app
 
 libraries:
-
+- name: pycrypto
+  version: latest
 - name: endpoints
   version: latest

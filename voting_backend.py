@@ -7,23 +7,46 @@ create by olala7846@gmail.com
 
 """
 import endpoints
-from protorpc import message
+from protorpc import messages
+from protorpc import message_types
 from protorpc import remote
 
 from google.appengine.ext import ndb
-from models import Election, Candidate, Voter
+from models import Election
+
+package = 'Hello'
+
+
+class Greeting(messages.Message):
+    """Greeting that stores a message."""
+    message = messages.StringField(1)
+
+
+class GreetingCollection(messages.Message):
+    """Collection of Greetings."""
+    items = messages.MessageField(Greeting, 1, repeated=True)
+
+
+STORED_GREETINGS = GreetingCollection(items=[
+    Greeting(message='hello world!'),
+    Greeting(message='goodbye world!'),
+])
 
 
 # -------- API --------
 @endpoints.api(name='voting_api', version='v1',
                description='2016 allstar voting api')
-class AllstarVotingApi(remote.Service):
+class VotingApi(remote.Service):
     """ allstar api """
 
-    @endpoints.
+    @endpoints.method(message_types.VoidMessage, GreetingCollection,
+                      path='create_election', http_method='GET',
+                      name='voting.create_election')
     def createElection(self, request):
         """ Creates new election """
-        return "Hello"
+        election = Election()
+        election.put()
+        return STORED_GREETINGS
 
 
-api = endpoints.api_server([AllstarVotingApi])  # register API
+api = endpoints.api_server([VotingApi])  # register API

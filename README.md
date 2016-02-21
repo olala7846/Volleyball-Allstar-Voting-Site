@@ -13,3 +13,6 @@ To start your own GAE project, please reference https://github.com/olala7846/GAE
   `source venv/bin/activate` or `source vb`
   `pip install -r packages.txt`
 
+## API server
+1. we use Google Cloud Endpoint as BE server, it comes with
+  a free API explorer at /_ah/api/explorer

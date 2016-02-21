@@ -14,7 +14,7 @@ class Election(ndb.Model):
     description = ndb.StringProperty()
     start_date = ndb.DateTimeProperty()
     end_date = ndb.DateTimeProperty()
-    positions = ndb.KeyProperty(repeat=True)
+    positions = ndb.KeyProperty(repeated=True)
 
 
 class Position(ndb.Model):
@@ -40,7 +40,7 @@ class Candidate(ndb.Model):
 class Vote(ndb.Model):
     """ People who vote and who they vote """
     positoin = ndb.KeyProperty(kind=Position)
-    candidates = ndb.KeyProperty(kind=Candidate, repeat=True)
+    candidates = ndb.KeyProperty(kind=Candidate, repeated=True)
 
 
 class VotingUser(ndb.Model):
@@ -48,7 +48,7 @@ class VotingUser(ndb.Model):
     student_id = ndb.StringProperty()
     voted = ndb.BooleanProperty()
     token = ndb.StringProperty()
-    votes = ndb.KeyProperty(kind=Vote, repeate=True)
+    votes = ndb.KeyProperty(kind=Vote, repeated=True)
 
 
 # Utility

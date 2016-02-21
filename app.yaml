@@ -19,5 +19,10 @@ handlers:
 - url: /.*
   script: voting.app
 
+- url: /_ah/spi/.*
+  script: voting_backend.api
+
 libraries:
-# GAE libraries here
+
+- name: endpoints
+  version: latest

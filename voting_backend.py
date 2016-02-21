@@ -14,23 +14,16 @@ from google.appengine.ext import ndb
 from models import Election, Candidate, Voter
 
 
-# -------- Messages --------
-
-class CreateElectionRequest(message.Message):
-
-
 # -------- API --------
-
-@endpoints.api(
-    name='voting_api', version='v1', description='2016 allstar voting api')
+@endpoints.api(name='voting_api', version='v1',
+               description='2016 allstar voting api')
 class AllstarVotingApi(remote.Service):
     """ allstar api """
 
-    @endpoints.method(
-
+    @endpoints.
     def createElection(self, request):
         """ Creates new election """
-
+        return "Hello"
 
 
 api = endpoints.api_server([AllstarVotingApi])  # register API

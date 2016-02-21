@@ -30,6 +30,7 @@ class Candidate(ndb.Model):
 
     key: election_id.position_id.candidate_id as key
     """
+    voting_index = ndb.IntegerProperty()
     name = ndb.StringProperty()
     description = ndb.TextProperty()
     avatar = ndb.StringProperty()

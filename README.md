@@ -15,4 +15,7 @@ To start your own GAE project, please reference https://github.com/olala7846/GAE
 
 ## API server
 1. we use Google Cloud Endpoint as BE server, it comes with
-  a free API explorer at /_ah/api/explorer
+  a free API explorer at `/_ah/api/explorer`
+2. but you cannot test explorer on dev server
+   reference [Google Developer](https://developers.google.com/explorer-help/#hitting_local_api) So I cerated a convenient script under `/script/open_chrome.sh`
+3. launch insecure chrome to test api explorer `sh ./script/open_chrome.sh`

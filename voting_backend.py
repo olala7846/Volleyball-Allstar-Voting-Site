@@ -34,18 +34,16 @@ STORED_GREETINGS = GreetingCollection(items=[
 
 
 # -------- API --------
-@endpoints.api(name='voting_api', version='v1',
-               description='2016 allstar voting api')
+@endpoints.api(name='voting', version='v1',
+               description='2016 allstar voting api backend')
 class VotingApi(remote.Service):
-    """ allstar api """
+    """ allstar voting api """
 
     @endpoints.method(message_types.VoidMessage, GreetingCollection,
-                      path='create_election', http_method='GET',
+                      path='greeting', http_method='GET',
                       name='voting.create_election')
-    def createElection(self, request):
-        """ Creates new election """
-        election = Election()
-        election.put()
+    def greeting(self, request):
+        """ Say hello"""
         return STORED_GREETINGS
 
 

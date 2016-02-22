@@ -16,27 +16,10 @@ from protorpc import message_types
 from protorpc import remote
 
 from google.appengine.ext import ndb
-from models import Election
-from models import ElectionForm
+from models import Election, Position
+from models import ElectionForm, PositionForm
 
 logger = logging.getLogger(__name__)
-
-
-# -------- Messages --------
-class Greeting(messages.Message):
-    """Greeting that stores a message."""
-    message = messages.StringField(1)
-
-
-class GreetingCollection(messages.Message):
-    """Collection of Greetings."""
-    items = messages.MessageField(Greeting, 1, repeated=True)
-
-
-STORED_GREETINGS = GreetingCollection(items=[
-    Greeting(message='hello world!'),
-    Greeting(message='goodbye world!'),
-])
 
 
 def remove_timezone(timestamp):
@@ -81,6 +64,23 @@ def _create_election(request):
     return election
 
 
+def _create_position(request):
+    # get and remove ancestor key
+    websafe_election_key = getattr(request, 'election_key')
+    election_key = ndb.Key(Election, websafe_election_key)
+    data = request_to_dict(request)
+    del data['election_key']
+    logger.error('populate with data %s', data)
+
+    # allocate position_id and position
+    position_id = ndb.Model.allocate_ids(size=1, parent=election_key)[0]
+    position_key = ndb.Key(Position, position_id, parent=election_key)
+    position = Position(key=position_key)
+    position.populate(**data)
+    position.put()
+    return position
+
+
 # sample transaction for later use
 @ndb.transactional
 def insert_if_absent(note_key, note):
@@ -97,13 +97,6 @@ def insert_if_absent(note_key, note):
 class VotingApi(remote.Service):
     """ allstar voting api """
 
-    @endpoints.method(message_types.VoidMessage, GreetingCollection,
-                      path='greeting', http_method='GET',
-                      name='greeting')
-    def greeting(self, request):
-        """ Sample gretting api """
-        return STORED_GREETINGS
-
     @endpoints.method(ElectionForm, ElectionForm, path='create_election',
                       http_method='POST', name='createElection')
     def create_election(self, request):
@@ -112,6 +105,17 @@ class VotingApi(remote.Service):
         """
         websafekey = _create_election(request)
         logger.info("Created Election %s", websafekey)
+        return request
+
+    @endpoints.method(PositionForm, PositionForm, path='create_position',
+                      http_method='POST', name='createPosition')
+    def create_position(self, request):
+        """ Creates new Position
+        parent_key is the target Election datastore key
+        start_date, end_date should be ISO format
+        """
+        websafekey = _create_position(request)
+        logger.info("Created Position %s", websafekey)
         return request
 
 

@@ -53,7 +53,7 @@ class VotingUser(ndb.Model):
     votes = ndb.KeyProperty(kind=Vote, repeated=True)
 
 
-# API Messages
+# API protorpc Messages
 class ElectionForm(messages.Message):
     """ message to create/update Election model """
     name = messages.StringField(1)
@@ -61,3 +61,13 @@ class ElectionForm(messages.Message):
     start_date = messages.StringField(3, required=True)
     end_date = messages.StringField(4, required=True)
     web_safe_key = messages.StringField(5)
+
+
+class PositionForm(messages.Message):
+    """ message to create/update Position model """
+    name = messages.StringField(1)
+    description = messages.StringField(2)
+    votes_per_person = messages.IntegerField(3)
+    num_elected = messages.IntegerField(4)
+    election_key = messages.StringField(5)
+    web_safe_key = messages.StringField(6)

@@ -4,4 +4,4 @@
 
 PORT_NUM=8080
 LAUNCH_CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-"${LAUNCH_CHROME}" --user-data-dir=test --unsafely-treat-insecure-origin-as-secure=http://localhost:$PORT_NUM
+"${LAUNCH_CHROME}" --user-data-dir=dev_chrome --unsafely-treat-insecure-origin-as-secure=http://localhost:$PORT_NUM

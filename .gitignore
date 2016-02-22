@@ -1,3 +1,4 @@
 *.pyc
 venv/
 bower_components/
+dev_chrome/

@@ -5,6 +5,8 @@ GAE Datastore models
 """
 
 from datetime import datetime
+from protorpc import messages
+from protorpc import message_types
 from google.appengine.ext import ndb
 
 
@@ -51,22 +53,21 @@ class VotingUser(ndb.Model):
     votes = ndb.KeyProperty(kind=Vote, repeated=True)
 
 
-# Utility
+# API protorpc Messages
+class ElectionForm(messages.Message):
+    """ message to create/update Election model """
+    name = messages.StringField(1)
+    description = messages.StringField(2)
+    start_date = messages.StringField(3, required=True)
+    end_date = messages.StringField(4, required=True)
+    web_safe_key = messages.StringField(5)
 
-def generate_election(description=None, start_time=None, end_time=None):
-    election = Election(description=description,
-                        start_time=start_time,
-                        end_time=end_time,
-                        create_time=datetime.now())
-    election.put()
-    return election
 
-
-# sample transaction for later use
-@ndb.transactional
-def insert_if_absent(note_key, note):
-    fetch = note_key.get()
-    if fetch is None:
-        note.put()
-        return True
-    return False
+class PositionForm(messages.Message):
+    """ message to create/update Position model """
+    name = messages.StringField(1)
+    description = messages.StringField(2)
+    votes_per_person = messages.IntegerField(3)
+    num_elected = messages.IntegerField(4)
+    election_key = messages.StringField(5)
+    web_safe_key = messages.StringField(6)

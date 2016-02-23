@@ -11,7 +11,11 @@ from google.appengine.ext import ndb
 
 
 class Election(ndb.Model):
-    """ Single Vote Event (e.g. 2016 Volleyball Allstar Game """
+    """ Single Vote Event (e.g. 2016 Volleyball Allstar Game
+
+    name is used for db query,
+    for human readable name plse use description
+    """
     name = ndb.StringProperty()
     description = ndb.StringProperty()
     start_date = ndb.DateTimeProperty()
@@ -20,7 +24,11 @@ class Election(ndb.Model):
 
 
 class Position(ndb.Model):
-    """ Single Vote Event (e.g. 2016 Volleyball Allstar Game """
+    """ Single Vote Event (e.g. 2016 Volleyball Allstar Game
+
+    name is used for db query,
+    for human readable name plse use description
+    """
     name = ndb.StringProperty()
     description = ndb.StringProperty()
     votes_per_person = ndb.IntegerProperty()

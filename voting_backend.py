@@ -19,6 +19,7 @@ from protorpc import remote
 from google.appengine.ext import ndb
 from models import Election, Position
 from models import ElectionForm, PositionForm
+from settings import ELECTION_DATA, POSITION_DATA
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ ADMIN_EMAILS = ["olala7846@gmail.com", "ins.huang@gmail.com"]
 class SimpleMessage(messages.Message):
     """ Simple protorpc message """
     msg = messages.StringField(1, required=True)
+
 
 # -------- Utilites --------
 def _is_admin(user):
@@ -47,7 +49,7 @@ def admin_only(wrapped, instance, args, kwargs):
 
 def remove_timezone(timestamp):
     """ Remove timezone completly
-    see http://stackoverflow.com/questions/12763938/why-doesnt-appengine-auto-convert-datetime-to-utc-when-calling-put
+    see http://stackoverflow.com/questions/12763938/
     """
     # date not tested
     timestamp = timestamp.replace(tzinfo=None) - timestamp.utcoffset()
@@ -104,6 +106,35 @@ def _create_position(request):
     return position
 
 
+def _factory_database(request):
+    """ Factory database with data from settings.py """
+    # create or update election
+    election_name = ELECTION_DATA['name']
+    election = Election.query(Election.name == election_name).get()
+    data = ELECTION_DATA
+    if election is None:
+        election = Election(**data)
+    else:
+        election.populate(**data)
+    election_key = election.put()
+
+    # create or update positions
+    for pos_data in POSITION_DATA:
+        position_name = pos_data['name']
+        position = Position.query(ancestor=election_key).filter(
+                Position.name == position_name).get()
+        position_key = None
+        if position is None:
+            position_id = ndb.Model.allocate_ids(
+                    size=1, parent=election_key)[0]
+            position_key = ndb.Key(Position, position_id, parent=election_key)
+            position = Position(key=position_key)
+        position.populate(**pos_data)
+        position.put()
+
+    return "update all datd"
+
+
 # -------- API --------
 @endpoints.api(name='voting', version='v1',
                description='2016 allstar voting api')
@@ -112,6 +143,7 @@ class VotingApi(remote.Service):
 
     @endpoints.method(ElectionForm, ElectionForm, path='create_election',
                       http_method='POST', name='createElection')
+    @admin_only
     def create_election(self, request):
         """ Creates new Election
         start_date, end_date should be ISO format
@@ -140,7 +172,8 @@ class VotingApi(remote.Service):
         """ Factory reset voting with data
         Should create Election, Role, and import data
         """
-        return SimpleMessage(msg="Not Implemented Yet")
+        result = _factory_database(request)
+        return SimpleMessage(msg=result)
 
 
 api = endpoints.api_server([VotingApi])  # register API

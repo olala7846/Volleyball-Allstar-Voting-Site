@@ -9,6 +9,7 @@ create by olala7846@gmail.com
 
 import logging
 import dateutil.parser
+import wrapt
 
 import endpoints
 from protorpc import messages
@@ -21,6 +22,7 @@ from models import ElectionForm, PositionForm
 
 logger = logging.getLogger(__name__)
 
+ADMIN_EMAILS = ["olala7846@gmail.com", "ins.huang@gmail.com"]
 
 def remove_timezone(timestamp):
     """ Remove timezone completly
@@ -91,6 +93,22 @@ def insert_if_absent(note_key, note):
     return False
 
 
+# -------- Utilites --------
+def is_admin(user):
+    if user is None:
+        return False
+    user_email = user.email()
+    return user_email in ADMIN_EMAILS
+
+
+@wrapt.decorator
+def admin_only(wrapped, instance, args, kwargs):
+    current_user = endpoints.get_current_user()
+    if not is_admin(current_user):
+        raise endpoints.UnauthorizedException('This API is admin only')
+    return wrapped(*args, **kwargs)
+
+
 # -------- API --------
 @endpoints.api(name='voting', version='v1',
                description='2016 allstar voting api')
@@ -109,6 +127,7 @@ class VotingApi(remote.Service):
 
     @endpoints.method(PositionForm, PositionForm, path='create_position',
                       http_method='POST', name='createPosition')
+    @admin_only
     def create_position(self, request):
         """ Creates new Position
         parent_key is the target Election datastore key

@@ -24,6 +24,27 @@ logger = logging.getLogger(__name__)
 
 ADMIN_EMAILS = ["olala7846@gmail.com", "ins.huang@gmail.com"]
 
+
+class SimpleMessage(messages.Message):
+    """ Simple protorpc message """
+    msg = messages.StringField(1, required=True)
+
+# -------- Utilites --------
+def _is_admin(user):
+    if user is None:
+        return False
+    user_email = user.email()
+    return user_email in ADMIN_EMAILS
+
+
+@wrapt.decorator
+def admin_only(wrapped, instance, args, kwargs):
+    current_user = endpoints.get_current_user()
+    if not _is_admin(current_user):
+        raise endpoints.UnauthorizedException('This API is admin only')
+    return wrapped(*args, **kwargs)
+
+
 def remove_timezone(timestamp):
     """ Remove timezone completly
     see http://stackoverflow.com/questions/12763938/why-doesnt-appengine-auto-convert-datetime-to-utc-when-calling-put
@@ -83,32 +104,6 @@ def _create_position(request):
     return position
 
 
-# sample transaction for later use
-@ndb.transactional
-def insert_if_absent(note_key, note):
-    fetch = note_key.get()
-    if fetch is None:
-        note.put()
-        return True
-    return False
-
-
-# -------- Utilites --------
-def is_admin(user):
-    if user is None:
-        return False
-    user_email = user.email()
-    return user_email in ADMIN_EMAILS
-
-
-@wrapt.decorator
-def admin_only(wrapped, instance, args, kwargs):
-    current_user = endpoints.get_current_user()
-    if not is_admin(current_user):
-        raise endpoints.UnauthorizedException('This API is admin only')
-    return wrapped(*args, **kwargs)
-
-
 # -------- API --------
 @endpoints.api(name='voting', version='v1',
                description='2016 allstar voting api')
@@ -136,6 +131,16 @@ class VotingApi(remote.Service):
         websafekey = _create_position(request)
         logger.info("Created Position %s", websafekey)
         return request
+
+    @endpoints.method(message_types.VoidMessage, SimpleMessage,
+                      path='factory_reset', http_method='GET',
+                      name='factoryReset')
+    @admin_only
+    def factory_reset(self, request):
+        """ Factory reset voting with data
+        Should create Election, Role, and import data
+        """
+        return SimpleMessage(msg="Not Implemented Yet")
 
 
 api = endpoints.api_server([VotingApi])  # register API

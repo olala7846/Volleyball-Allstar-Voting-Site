@@ -10,6 +10,7 @@ create by olala7846@gmail.com
 import logging
 import dateutil.parser
 import wrapt
+from datetime import datetime
 
 import endpoints
 from protorpc import messages
@@ -20,6 +21,7 @@ from google.appengine.ext import ndb
 from models import Election, Position
 from models import ElectionForm, PositionForm
 from settings import ELECTION_DATA, POSITION_DATA
+from candidate_data import outside
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +134,24 @@ def _factory_database(request):
         position.populate(**pos_data)
         position.put()
 
-    return "update all datd"
+    outside_candidates = outside.roles
+
+
+    return "update all data successfully"
+
+
+def _update_unended_elections():
+    """ iterate unfinished elections and update its status """
+    qry = Election.query(Election.finished == False)
+    election_iterator = qry.iter()
+    now = datetime.now()
+    cnt = 0
+    for elect in election_iterator:
+        if elect.end_date < now:
+            elect.finished = True
+            elect.put()
+            cnt = cnt + 1
+    return cnt
 
 
 # -------- API --------
@@ -174,5 +193,15 @@ class VotingApi(remote.Service):
         """
         result = _factory_database(request)
         return SimpleMessage(msg=result)
+
+    @endpoints.method(message_types.VoidMessage, SimpleMessage,
+                      path='update_election_status', http_method='GET',
+                      name='updateElectionStatus')
+    def update_election_status(self, request):
+        """ Updates the election.finished status """
+        cnt = _update_unended_elections()
+        msg = '%d elections finished' % cnt
+        return SimpleMessage(msg=msg)
+
 
 api = endpoints.api_server([VotingApi])  # register API

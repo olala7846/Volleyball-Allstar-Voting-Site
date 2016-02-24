@@ -25,19 +25,22 @@
     </div>
   </div>
   <div class="row">
+    {% for voting in content.votings %}
     <div class="col-xs-12">
       <div class="jumbotron">
-        <h1>2016男排全明星賽</h1>
-        <p>bla bla bla</p>
-        <p><a class="btn btn-primary btn-lg want-vote" href="#">我要投票</a></p>
+        <h1>{{ voting.title }}</h1>
+        <p>{{ voting.description }}</p>
+        <p><a class="btn btn-primary btn-lg want-vote" href="#">我要投票 (modal)</a></p>
+        <p><a class="btn btn-primary btn-lg" href="/vote/{{voting.websafe_key}}/">開始投票開始投票 (extra)</a></p>
       </div>
     </div>
+    {% endfor %}
 
     {% for vote in content.votings %}
     <div class="col-sm-6 col-xs-12">
       <div class="card card-block">
-        <h4>{{vote}}</h4>
-        <p> bla bla bla bla</p>
+        <h4>{{vote.title}}</h4>
+        <p>{{vote.description}}</p>
         <a class="card-link" href="">haha</a>
         <a class="card-link" href="">hehe</a>
       </div>

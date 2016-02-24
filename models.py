@@ -14,22 +14,39 @@ class Election(ndb.Model):
     """ Single Vote Event (e.g. 2016 Volleyball Allstar Game
 
     name is used for db query,
-    for human readable name plse use description
+    for human readable name plse use title and description
     """
     name = ndb.StringProperty()
+    title = ndb.StringProperty()
     description = ndb.StringProperty()
     start_date = ndb.DateTimeProperty()
     end_date = ndb.DateTimeProperty()
-    positions = ndb.KeyProperty(repeated=True)
+    finished = ndb.BooleanProperty()
+
+    @classmethod
+    def unfinished_elections(cls):
+        """ get first first 20 unfinished elections """
+        qry = Election.query(cls.finished == False)
+        elections = qry.order(-cls.end_date).fetch(20)
+        return elections
+
+    def to_dict(self):
+        data = {
+            'title': self.title,
+            'description': self.description,
+            'websafe_key': str(self.key)
+        }
+        return data
 
 
 class Position(ndb.Model):
     """ Single Vote Event (e.g. 2016 Volleyball Allstar Game
 
     name is used for db query,
-    for human readable name plse use description
+    for human readable name please use title and description
     """
     name = ndb.StringProperty()
+    title = ndb.StringProperty()
     description = ndb.StringProperty()
     votes_per_person = ndb.IntegerProperty()
     num_elected = ndb.IntegerProperty()
@@ -43,6 +60,7 @@ class Candidate(ndb.Model):
     voting_index = ndb.IntegerProperty()
     name = ndb.StringProperty()
     description = ndb.TextProperty()
+    department = ndb.StringProperty()
     avatar = ndb.StringProperty()
     num_votes = ndb.IntegerProperty()
 

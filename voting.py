@@ -3,10 +3,10 @@
 
 from flask import Flask, render_template, request, jsonify
 from google.appengine.api import mail
-from models import VotingUser
+from models import VotingUser, Election
 import uuid
 import math
-import datetime
+from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,8 +18,9 @@ app.config['DEBUG'] = True  # turn to false on production
 @app.route("/")
 @app.route("/voting/")
 def welcome():
-    votings = ['voting1', 'voting2']
+    votings = [e.to_dict() for e in Election.unfinished_elections()]
     content = {'votings': votings}
+    logger.error(votings)
     return render_template('welcome.html', content=content)
 
 
@@ -36,7 +37,8 @@ def _send_voting_email(voting_user):
         is_sent: bool, an email is sent successfully.
     """
     # Send email by gmail api
-    voting_link = "http://ntuvb-allstar.appspot.com/voting/" + voting_user.token
+    voting_link = "http://ntuvb-allstar.appspot.com/voting/"\
+                  + voting_user.token
     email_content = u"投票請進：" + voting_link
     base_mail_options = {"sender": "ins.huang@gmail.com",
                          "to": voting_user.student_id + "@ntu.edu.tw",
@@ -62,7 +64,8 @@ def _get_rest_wait_time(voting_user):
         rest_wait_time: int, the rest wait time in minute.
     """
     if voting_user.email_count > 0:
-        minute_diff = int((datetime.datetime.now() - voting_user.create_time).total_seconds() / 60)
+        time_since_create = (datetime.now() - voting_user.create_time)
+        minute_diff = int(time_since_create.total_seconds() / 60)
         minutes_should_wait = 10 * math.pow(2, voting_user.email_count - 1)
         if minute_diff < minutes_should_wait:
             return minutes_should_wait - minute_diff
@@ -89,24 +92,28 @@ def send_voting_email():
 
     try:
         # Get VotingUser with given lowercase_student_id
-        voting_user = VotingUser.query(VotingUser.student_id == lowercase_student_id).get()
+        voting_user = VotingUser.query(
+                VotingUser.student_id == lowercase_student_id).get()
 
         if voting_user:
             # Only send voting email to existing user when forced_send is set
             # and less than 3 emails are sent for the user.
             rest_wait_time = _get_rest_wait_time(voting_user)
-            if voting_user.email_count == 0 or (forced_send and rest_wait_time == 0):
+            if voting_user.email_count == 0 or (
+                    forced_send and rest_wait_time == 0):
                 is_sent = _send_voting_email(voting_user)
         else:
             # If VotingUser does not exist, create one and send email
             token = str(uuid.uuid4().hex)
-            voting_user = VotingUser(student_id=lowercase_student_id, voted=False, token=token)
+            voting_user = VotingUser(
+                    student_id=lowercase_student_id, voted=False, token=token)
             key = voting_user.put()
             key.get()  # for strong consistency
             is_sent = _send_voting_email(voting_user)
     except Exception, e:
         logger.error("Error in send_voting_email")
-        logger.error("student_id: %s, forced_send: %s" % (lowercase_student_id, forced_send))
+        logger.error("student_id: %s, forced_send: %s" % (
+            lowercase_student_id, forced_send))
         logger.error(e)
         error_message = "寄送認證信失敗，請聯絡工作人員。"
 

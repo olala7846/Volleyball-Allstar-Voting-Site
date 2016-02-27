@@ -16,16 +16,22 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.config['DEBUG'] = True  # turn to false on production
 
+# -------- utils --------
+def _get_user_from_token(ticked_id):
+    logger.error('_is_valid_ticket Not Implemented Yet!!')
+    return VotingUser()
 
-@app.route("/")
-@app.route("/voting/")
+
+# -------- pages --------
+
+@app.route("/", methods=['GET'])
 def welcome():
     elections = [e.to_dict() for e in Election.unfinished_elections()]
     content = {'elections': elections}
     return render_template('welcome.html', content=content)
 
 
-@app.route("/vote/<websafe_key>/")
+@app.route("/register/<websafe_key>/", methods=['GET'])
 def voting_index(websafe_key):
     election_key = ndb.Key(urlsafe=websafe_key)
     election = election_key.get()
@@ -133,6 +139,21 @@ def send_voting_email():
         "error_message": error_message
     }
     return jsonify(**result)
+
+
+@app.route("/vote/<token>/", methods=['GET', 'POST'])
+def get_ticket(token):
+    user = _get_user_from_token(token)
+    if not user:
+        abort(404)
+    if request.method == 'GET':
+        if user.voted:
+            return render_template('alreadyvoted.html')
+        else:
+            return render_template('vote.html')
+    elif request.method == 'POST':
+        logger.error('POST vote/<token>/ not implemented')
+        return jsonify({'result': 'fail'})
 
 
 @app.errorhandler(404)

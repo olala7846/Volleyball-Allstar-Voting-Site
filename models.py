@@ -21,12 +21,13 @@ class Election(ndb.Model):
     description = ndb.StringProperty()
     start_date = ndb.DateTimeProperty()
     end_date = ndb.DateTimeProperty()
-    finished = ndb.BooleanProperty()
+    started = ndb.BooleanProperty(default=True)
 
     @classmethod
     def unfinished_elections(cls):
         """ get first first 20 unfinished elections """
-        qry = Election.query(cls.finished == False)
+        now = datetime.now()
+        qry = Election.query(cls.end_date > now)
         elections = qry.order(-cls.end_date).fetch(20)
         return elections
 
@@ -34,7 +35,7 @@ class Election(ndb.Model):
         data = {
             'title': self.title,
             'description': self.description,
-            'websafe_key': str(self.key)
+            'websafe_key': self.key.urlsafe(),
         }
         return data
 

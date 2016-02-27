@@ -157,14 +157,14 @@ def _factory_election_data(websafe_election_key):
 
 
 def _update_unended_elections():
-    """ iterate unfinished elections and update its status """
-    qry = Election.query(Election.finished == False)
+    """ iterate unstarted elections and update status """
+    qry = Election.query(Election.started == False)
     election_iterator = qry.iter()
     now = datetime.now()
     cnt = 0
     for elect in election_iterator:
-        if elect.end_date < now:
-            elect.finished = True
+        if elect.start_date < now:
+            elect.started = True
             elect.put()
             cnt = cnt + 1
     return cnt

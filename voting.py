@@ -18,9 +18,9 @@ app.config['DEBUG'] = True  # turn to false on production
 @app.route("/")
 @app.route("/voting/")
 def welcome():
-    votings = [e.to_dict() for e in Election.unfinished_elections()]
-    content = {'votings': votings}
-    logger.error(votings)
+    elections = [e.to_dict() for e in Election.unfinished_elections()]
+    content = {'elections': elections}
+    logger.error('unfinished elections: %s', elections)
     return render_template('welcome.html', content=content)
 
 

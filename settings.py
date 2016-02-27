@@ -13,8 +13,7 @@ ELECTION_DATA = {
     'title': u'2016排球明星賽',
     'description': u'2016台大排球明星賽',
     'start_date': datetime(2016, 4, 1, 8, 0),  # year, month, day, hour, min
-    'end_date': datetime(2015, 4, 14, 8, 0),
-    'finished': False,
+    'end_date': datetime(2015, 4, 14, 8, 0)
 }
 POSITION_DATA = [
     {

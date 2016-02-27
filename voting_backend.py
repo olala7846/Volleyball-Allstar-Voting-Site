@@ -207,9 +207,9 @@ class VotingApi(remote.Service):
                       path='update_election_status', http_method='GET',
                       name='updateElectionStatus')
     def update_election_status(self, request):
-        """ Updates the election.finished status """
+        """ Updates the election.started status """
         cnt = _update_unended_elections()
-        msg = '%d elections finished' % cnt
+        msg = '%d elections started' % cnt
         return SimpleMessage(msg=msg)
 
 

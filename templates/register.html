@@ -4,9 +4,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container" ng-app="registerApp">
   <div class="row">
-    <div class="card register-panel">
+    <div class="card register-panel" ng-controller="RegisterFormController">
 
       <div class="card-block">
         <h4 class="card-title">開始投票</h4>
@@ -26,15 +26,18 @@
 
       <form action="">
         <div class="card-block">
-          <div class="input-group">
-            <input type="text" class="form-control" placeholder="例: B01234567"
+          <div class="input-group" ng-class="inputGroupClass">
+            <input type="text" class="form-control" ng-model="ntuldap"
+                   ng-change="validate()" placeholder="例: B01234567"
                    aria-describedby="basic-addon2">
             <span class="input-group-addon">@ntu.edu.tw</span>
           </div>
         </div>
 
         <div class="card-block">
-          <a href="#" class="btn btn-primary">開始投票!</a>
+          <button class="btn btn-primary" ng-disabled="!valid">
+            開始投票!
+          </button>
         </div>
       </form>
 
@@ -43,5 +46,7 @@
   </div>
 </div>
 
-
+{% endblock %}
+{% block extra_script %}
+  <script src="/js/register.js"></script>
 {% endblock %}

@@ -1,0 +1,14 @@
+{% extends "allstar.html" %}
+{% block morehead %}
+  <link rel="stylesheet" href="/css/welcome.css">
+{% endblock %}
+{% block content %}
+ <div class="container" ng-app="voteApp">
+  <div class="row" ng-controller="VoteController">
+    <h1>{{'message'|aj}}</h1>
+  </div>
+</div>
+{% endblock %}
+{% block extra_script %}
+  <script src="/js/vote.js"></script>
+{% endblock %}

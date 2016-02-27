@@ -39,6 +39,21 @@ class Election(ndb.Model):
         }
         return data
 
+    # please cache this!!
+    def full_election_data(self):
+        """ Get the nested voting """
+        positions = Position.query(ancestor=self.key).fetch()
+        positions_dict = [pos.to_dict() for pos in positions]
+
+        data = {
+            'title': self.title,
+            'description': self.description,
+            'start_date': self.start_date.isoformat(),
+            'end_date': self.end_date.isoformat(),
+            'positions': positions_dict,
+        }
+        return data
+
 
 class Position(ndb.Model):
     """ Single Vote Event (e.g. 2016 Volleyball Allstar Game
@@ -52,6 +67,9 @@ class Position(ndb.Model):
     votes_per_person = ndb.IntegerProperty()
     num_elected = ndb.IntegerProperty()
     candidate_keys = ndb.KeyProperty(repeated=True)
+
+    def to_dict(self):
+        return {'pos': self.key}
 
 
 class Candidate(ndb.Model):

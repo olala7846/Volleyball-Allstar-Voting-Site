@@ -16,14 +16,20 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.config['DEBUG'] = True  # turn to false on production
 
+
 # -------- utils --------
-def _get_user_from_token(ticked_id):
+def _get_data_from_token(ticked_id):
+    """ Returns corresponding User and Election Object """
     logger.error('_is_valid_ticket Not Implemented Yet!!')
     return VotingUser()
 
 
-# -------- pages --------
+@app.template_filter('aj')
+def angular_js_filter(s):
+    return '{{'+s+'}}'
 
+
+# -------- pages --------
 @app.route("/", methods=['GET'])
 def welcome():
     elections = [e.to_dict() for e in Election.unfinished_elections()]
@@ -143,14 +149,16 @@ def send_voting_email():
 
 @app.route("/vote/<token>/", methods=['GET', 'POST'])
 def get_ticket(token):
-    user = _get_user_from_token(token)
+    user, election = _get_data_from_token(token)
     if not user:
         abort(404)
     if request.method == 'GET':
         if user.voted:
             return render_template('alreadyvoted.html')
         else:
-            return render_template('vote.html')
+            data = election.full_election_data()
+            content = {'data': data}
+            return render_template('vote.html', content=content)
     elif request.method == 'POST':
         logger.error('POST vote/<token>/ not implemented')
         return jsonify({'result': 'fail'})

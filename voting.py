@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 # voting app
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, abort
 from google.appengine.api import mail
+from google.appengine.ext import ndb
 from models import VotingUser, Election
+
+from datetime import datetime
 import uuid
 import math
-from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,13 +22,19 @@ app.config['DEBUG'] = True  # turn to false on production
 def welcome():
     elections = [e.to_dict() for e in Election.unfinished_elections()]
     content = {'elections': elections}
-    logger.error('unfinished elections: %s', elections)
     return render_template('welcome.html', content=content)
 
 
-@app.route("/voting/<voting_id>")
-def voting_index(voting_id):
-    return 'voting id : %s' % voting_id
+@app.route("/vote/<websafe_key>/")
+def voting_index(websafe_key):
+    election_key = ndb.Key(urlsafe=websafe_key)
+    election = election_key.get()
+    logger.error('Got election: %s', election)
+    if not election or not election.started:
+        abort(404)
+    election_data = election.to_dict()
+    content = {'election': election_data}
+    return render_template('register.html', content=content)
 
 
 def _send_voting_email(voting_user):

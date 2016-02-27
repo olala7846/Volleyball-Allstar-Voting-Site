@@ -1,9 +1,16 @@
 {% extends "allstar.html" %}
 {% block morehead %}
   <link rel="stylesheet" href="/css/all_votings.css">
+  <link rel="stylesheet" href="/css/welcome.css">
 {% endblock %}
 
 {% block content %}
+  <div class="jumbotron jumbotron-fluid">
+    <div class="container">
+      <h1 class="display-3">第六屆台大排球明星賽</h1>
+      <p class="lead text-right">STARTED SINCE 2011</p>
+    </div>
+  </div>
   <div id="modal-container">
     <div class="modal fade" aria-hidden="false">
       <div class="modal-dialog">
@@ -38,11 +45,27 @@
         </p>
       </div>
     </div>
-    {% endfor %}
-    {% if content.elections.length == 0 %}
-      <h2>目前沒有投票進行中...</h2>
+  </div>
+  <div class="container">
+    <div class="row">
+      {% for election in content.elections %}
+      <div class="col-xs-12">
+        <div class="jumbotron">
+          <h1>{{ election.title }}</h1>
+          <p>{{ election.description }}</p>
+          <p>
+            <a class="btn btn-primary btn-lg" href="/vote/{{election.websafe_key}}/">
+              開始投票
+            </a>
+          </p>
+        </div>
+      </div>
+      {% endfor %}
+      {% if content.elections.length == 0 %}
+        <h2>目前沒有投票進行中...</h2>
 
-    {% endif %}
+      {% endif %}
+    </div>
   </div>
 {% endblock %}
 

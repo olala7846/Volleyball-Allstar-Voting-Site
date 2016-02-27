@@ -1,0 +1,47 @@
+{% extends "allstar.html" %}
+{% block morehead %}
+  <link rel="stylesheet" href="/css/register.css">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="card register-panel">
+
+      <div class="card-block">
+        <h4 class="card-title">開始投票</h4>
+        <p class="card-text">
+          請依照下面步驟進行投票，投票時間為
+          xxxxx ~ xxxxxx
+        </p>
+      </div>
+
+      <div class="card-block">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">1. 輸入台大信箱</li>
+          <li class="list-group-item">2. 至台大信箱收信(??分鐘內)</li>
+          <li class="list-group-item">3. 點選信中連結開始投票</li>
+        </ul>
+      </div>
+
+      <form action="">
+        <div class="card-block">
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="例: B01234567"
+                   aria-describedby="basic-addon2">
+            <span class="input-group-addon">@ntu.edu.tw</span>
+          </div>
+        </div>
+
+        <div class="card-block">
+          <a href="#" class="btn btn-primary">開始投票!</a>
+        </div>
+      </form>
+
+    </div>
+
+  </div>
+</div>
+
+
+{% endblock %}

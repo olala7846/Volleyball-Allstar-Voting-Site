@@ -1,0 +1,11 @@
+/* register.css */
+.text-right {
+  text-align: right;
+}
+.register-panel {
+  margin-top: 20px;
+}
+.register-form {
+  margin-top: 10px;
+  padding: 10px 10px;
+}

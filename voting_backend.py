@@ -19,7 +19,7 @@ from protorpc import remote
 
 from google.appengine.ext import ndb
 from models import Election, Position, Candidate
-from models import ElectionForm, PositionForm
+from models import ElectionForm, WebsafekeyForm
 from settings import ELECTION_DATA, POSITION_DATA
 
 logger = logging.getLogger(__name__)
@@ -77,7 +77,7 @@ def request_to_dict(request):
         else:
             data[field.name] = val
 
-    del data['web_safe_key']
+    del data['websafe_key']
     return data
 
 
@@ -187,27 +187,19 @@ class VotingApi(remote.Service):
         logger.info("Created Election %s", websafekey)
         return request
 
-    @endpoints.method(PositionForm, PositionForm, path='create_position',
-                      http_method='POST', name='createPosition')
-    @admin_only
-    def create_position(self, request):
-        """ Creates new Position
-        parent_key is the target Election datastore key
-        start_date, end_date should be ISO format
-        """
-        websafekey = _create_position(request)
-        logger.info("Created Position %s", websafekey)
-        return request
-
-    @endpoints.method(message_types.VoidMessage, SimpleMessage,
+    @endpoints.method(WebsafekeyForm, SimpleMessage,
                       path='setup_election', http_method='GET',
                       name='setupElection')
     @admin_only
     def setup_election(self, request):
         """ Factory reset voting with data
-        Should create Election, Role, and import data
+        Should create Election, Role, and import Candidate data
+
+        Though accecting ElectionForm, only websafe_key is required
         """
         # get websafe_election_key if in request
+        if not request.websafe_key:
+            raise endpoints.BadRequestException("require electino key")
         result = _factory_election_data(None)
         return SimpleMessage(msg=result)
 

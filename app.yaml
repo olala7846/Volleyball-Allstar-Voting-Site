@@ -27,3 +27,8 @@ libraries:
   version: latest
 - name: endpoints
   version: latest
+
+skip_files:
+- ^(.*/)?.*\.pyc$
+- ^venv/bin/.*$
+- ^venv/include/.*$

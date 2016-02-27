@@ -9,6 +9,7 @@ create by olala7846@gmail.com
 
 import logging
 import dateutil.parser
+import wrapt
 
 import endpoints
 from protorpc import messages
@@ -18,13 +19,37 @@ from protorpc import remote
 from google.appengine.ext import ndb
 from models import Election, Position
 from models import ElectionForm, PositionForm
+from settings import ELECTION_DATA, POSITION_DATA
 
 logger = logging.getLogger(__name__)
+
+ADMIN_EMAILS = ["olala7846@gmail.com", "ins.huang@gmail.com"]
+
+
+class SimpleMessage(messages.Message):
+    """ Simple protorpc message """
+    msg = messages.StringField(1, required=True)
+
+
+# -------- Utilites --------
+def _is_admin(user):
+    if user is None:
+        return False
+    user_email = user.email()
+    return user_email in ADMIN_EMAILS
+
+
+@wrapt.decorator
+def admin_only(wrapped, instance, args, kwargs):
+    current_user = endpoints.get_current_user()
+    if not _is_admin(current_user):
+        raise endpoints.UnauthorizedException('This API is admin only')
+    return wrapped(*args, **kwargs)
 
 
 def remove_timezone(timestamp):
     """ Remove timezone completly
-    see http://stackoverflow.com/questions/12763938/why-doesnt-appengine-auto-convert-datetime-to-utc-when-calling-put
+    see http://stackoverflow.com/questions/12763938/
     """
     # date not tested
     timestamp = timestamp.replace(tzinfo=None) - timestamp.utcoffset()
@@ -81,14 +106,33 @@ def _create_position(request):
     return position
 
 
-# sample transaction for later use
-@ndb.transactional
-def insert_if_absent(note_key, note):
-    fetch = note_key.get()
-    if fetch is None:
-        note.put()
-        return True
-    return False
+def _factory_database(request):
+    """ Factory database with data from settings.py """
+    # create or update election
+    election_name = ELECTION_DATA['name']
+    election = Election.query(Election.name == election_name).get()
+    data = ELECTION_DATA
+    if election is None:
+        election = Election(**data)
+    else:
+        election.populate(**data)
+    election_key = election.put()
+
+    # create or update positions
+    for pos_data in POSITION_DATA:
+        position_name = pos_data['name']
+        position = Position.query(ancestor=election_key).filter(
+                Position.name == position_name).get()
+        position_key = None
+        if position is None:
+            position_id = ndb.Model.allocate_ids(
+                    size=1, parent=election_key)[0]
+            position_key = ndb.Key(Position, position_id, parent=election_key)
+            position = Position(key=position_key)
+        position.populate(**pos_data)
+        position.put()
+
+    return "update all datd"
 
 
 # -------- API --------
@@ -99,6 +143,7 @@ class VotingApi(remote.Service):
 
     @endpoints.method(ElectionForm, ElectionForm, path='create_election',
                       http_method='POST', name='createElection')
+    @admin_only
     def create_election(self, request):
         """ Creates new Election
         start_date, end_date should be ISO format
@@ -109,6 +154,7 @@ class VotingApi(remote.Service):
 
     @endpoints.method(PositionForm, PositionForm, path='create_position',
                       http_method='POST', name='createPosition')
+    @admin_only
     def create_position(self, request):
         """ Creates new Position
         parent_key is the target Election datastore key
@@ -117,6 +163,17 @@ class VotingApi(remote.Service):
         websafekey = _create_position(request)
         logger.info("Created Position %s", websafekey)
         return request
+
+    @endpoints.method(message_types.VoidMessage, SimpleMessage,
+                      path='factory_reset', http_method='GET',
+                      name='factoryReset')
+    @admin_only
+    def factory_reset(self, request):
+        """ Factory reset voting with data
+        Should create Election, Role, and import data
+        """
+        result = _factory_database(request)
+        return SimpleMessage(msg=result)
 
 
 api = endpoints.api_server([VotingApi])  # register API

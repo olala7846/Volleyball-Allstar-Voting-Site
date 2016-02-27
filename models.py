@@ -59,6 +59,7 @@ class VotingUser(ndb.Model):
     voted = ndb.BooleanProperty()
     token = ndb.StringProperty()
     votes = ndb.KeyProperty(kind=Vote, repeated=True)
+    email_count = ndb.IntegerProperty()
 
 
 # API protorpc Messages

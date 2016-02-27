@@ -9,7 +9,7 @@
       <div class="jumbotron">
         <h1>2016男排全明星賽</h1>
         <p>bla bla bla</p>
-        <p><a class="btn btn-primary btn-lg" href="">開始投票</a></p>
+        <p><a class="btn btn-primary btn-lg want-vote" href="#">我要投票</a></p>
       </div>
     </div>
 
@@ -24,4 +24,13 @@
     </div>
     {% endfor %}
   </div>
+{% endblock %}
+
+{% block extra_script %}
+<script src="/static/send_email_dialog.js"></script>
+<script type="text/javascript">
+$(function() {
+    sendEmailDialog.init();
+});
+</script>
 {% endblock %}

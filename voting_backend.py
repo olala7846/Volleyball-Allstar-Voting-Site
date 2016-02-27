@@ -175,5 +175,4 @@ class VotingApi(remote.Service):
         result = _factory_database(request)
         return SimpleMessage(msg=result)
 
-
 api = endpoints.api_server([VotingApi])  # register API

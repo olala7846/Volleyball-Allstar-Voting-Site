@@ -26,7 +26,18 @@ def voting_index(voting_id):
 
 
 def _send_voting_email(voting_user):
+    """ Create voting user and send voting email with token to user
+    Input:
+        voting_user: VotingUser, the userto be sent.
+    Output:
+        is_sent: bool, an email is sent successfully.
+    """
+    voting_user.email_count += 1
+    key = voting_user.put()
+    key.get()  # for strong consistency
+
     logger.info("Email is sent to %s" % voting_user.student_id)
+    return True
 
 
 @app.route("/api/send_voting_email", methods=["POST"])
@@ -40,7 +51,7 @@ def send_voting_email():
         sent_count: int, the count of emails sent for the student_id.
     """
     lowercase_student_id = request.form.get('student_id').lower()
-    forced_send = request.form.get('forced_send')
+    forced_send = True if request.form.get('forced_send') == 'true' else False
     is_sent = False
     error_message = ""
 
@@ -50,7 +61,7 @@ def send_voting_email():
 
         if voting_user:
             # Only send voting email to existing user when forced_send is set
-            # and less than 3 emails are sent for the user. 
+            # and less than 3 emails are sent for the user.
             if forced_send and voting_user.email_count < 3:
                 is_sent = _send_voting_email(voting_user)
         else:
@@ -69,6 +80,7 @@ def send_voting_email():
     result = {
         "is_sent": is_sent,
         "email_count": voting_user.email_count if voting_user else 0,
+        "voted": voting_user.voted,
         "error_message": error_message
     }
     return jsonify(**result)

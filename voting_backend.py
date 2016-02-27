@@ -18,10 +18,9 @@ from protorpc import message_types
 from protorpc import remote
 
 from google.appengine.ext import ndb
-from models import Election, Position
+from models import Election, Position, Candidate
 from models import ElectionForm, PositionForm
 from settings import ELECTION_DATA, POSITION_DATA
-from candidate_data import outside
 
 logger = logging.getLogger(__name__)
 
@@ -108,24 +107,25 @@ def _create_position(request):
     return position
 
 
-def _factory_database(request):
+def _factory_election_data(websafe_election_key):
     """ Factory database with data from settings.py """
     # create or update election
-    election_name = ELECTION_DATA['name']
-    election = Election.query(Election.name == election_name).get()
-    data = ELECTION_DATA
-    if election is None:
-        election = Election(**data)
+    election = None
+    if websafe_election_key is not None:
+        election_key = ndb.Key(urlsafe=websafe_election_key)
+        election = election_key.get()
     else:
-        election.populate(**data)
+        election = Election()
+    election.populate(**ELECTION_DATA)
     election_key = election.put()
 
-    # create or update positions
     for pos_data in POSITION_DATA:
+        data_dictionaries = pos_data['data']
+        del pos_data['data']
+
         position_name = pos_data['name']
-        position = Position.query(ancestor=election_key).filter(
-                Position.name == position_name).get()
-        position_key = None
+        position = Position.query(ancestor=election_key).\
+            filter(Position.name == position_name).get()
         if position is None:
             position_id = ndb.Model.allocate_ids(
                     size=1, parent=election_key)[0]
@@ -134,8 +134,24 @@ def _factory_database(request):
         position.populate(**pos_data)
         position.put()
 
-    outside_candidates = outside.roles
+        # remove all roles under position
+        candidate_keys = position.candidate_keys
+        candidates = ndb.get_multi(candidate_keys)
+        ndb.delete_multi(candidates)
 
+        # create all roles from data
+        candidates = []
+        for index, data_dict in enumerate(data_dictionaries):
+            candidate_id = ndb.Model.allocate_ids(
+                    size=1, parent=election_key)[0]
+            candidate_key = ndb.Key(Candidate, candidate_id,
+                                    parent=election_key)
+            candidate = Candidate(key=candidate_key)
+            data_dict['voting_index'] = index
+            candidate.populate(**data_dict)
+            candidates.append(candidate)
+        position.candidate_keys = ndb.put_multi(candidates)
+        position.put()
 
     return "update all data successfully"
 
@@ -184,14 +200,15 @@ class VotingApi(remote.Service):
         return request
 
     @endpoints.method(message_types.VoidMessage, SimpleMessage,
-                      path='factory_reset', http_method='GET',
-                      name='factoryReset')
+                      path='setup_election', http_method='GET',
+                      name='setupElection')
     @admin_only
-    def factory_reset(self, request):
+    def setup_election(self, request):
         """ Factory reset voting with data
         Should create Election, Role, and import data
         """
-        result = _factory_database(request)
+        # get websafe_election_key if in request
+        result = _factory_election_data(None)
         return SimpleMessage(msg=result)
 
     @endpoints.method(message_types.VoidMessage, SimpleMessage,

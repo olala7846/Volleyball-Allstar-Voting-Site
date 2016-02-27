@@ -50,6 +50,7 @@ class Position(ndb.Model):
     description = ndb.StringProperty()
     votes_per_person = ndb.IntegerProperty()
     num_elected = ndb.IntegerProperty()
+    candidate_keys = ndb.KeyProperty(repeated=True)
 
 
 class Candidate(ndb.Model):

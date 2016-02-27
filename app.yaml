@@ -10,8 +10,14 @@ handlers:
 - url: /bower
   static_dir: bower_components
 
-- url: /static
-  static_dir: static
+- url: /img
+  static_dir: static/img
+
+- url: /css
+  static_dir: static/css
+
+- url: /js
+  static_dir: static/js
 
 - url: /hello
   script: helloworld.app

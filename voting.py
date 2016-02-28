@@ -70,21 +70,21 @@ def send_voting_email():
     error_message = ""
 
     try:
-    # Get VotingUser with given lowercase_student_id
-    voting_user = VotingUser.query(VotingUser.student_id == lowercase_student_id).get()
+        # Get VotingUser with given lowercase_student_id
+        voting_user = VotingUser.query(VotingUser.student_id == lowercase_student_id).get()
 
-    if voting_user:
-        # Only send voting email to existing user when forced_send is set
-        # and less than 3 emails are sent for the user.
-        if forced_send and voting_user.email_count < 3:
+        if voting_user:
+            # Only send voting email to existing user when forced_send is set
+            # and less than 3 emails are sent for the user.
+            if forced_send and voting_user.email_count < 3:
+                is_sent = _send_voting_email(voting_user)
+        else:
+            # If VotingUser does not exist, create one and send email
+            token = str(uuid.uuid4().hex)
+            voting_user = VotingUser(student_id=lowercase_student_id, voted=False, token=token)
+            key = voting_user.put()
+            key.get()  # for strong consistency
             is_sent = _send_voting_email(voting_user)
-    else:
-        # If VotingUser does not exist, create one and send email
-        token = str(uuid.uuid4().hex)
-        voting_user = VotingUser(student_id=lowercase_student_id, voted=False, token=token)
-        key = voting_user.put()
-        key.get()  # for strong consistency
-        is_sent = _send_voting_email(voting_user)
     except Exception, e:
         logger.error("Error in send_voting_email")
         logger.error("student_id: %s, forced_send: %s" % (lowercase_student_id, forced_send))

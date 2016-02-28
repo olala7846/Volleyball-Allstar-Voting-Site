@@ -29,7 +29,7 @@ var sendEmailDialog = (function() {
                     show_voted_msg();
                 }
                 else if (data.error_message) {
-                    show_error_msg();
+                    show_error_msg(data.error_message);
                 }
                 else {
                     show_ask_resent_msg(student_id, data.email_count);
@@ -97,12 +97,12 @@ var sendEmailDialog = (function() {
             '<a class="btn btn-primary" href="">看投票結果</a>'
             );
     };
-    var show_error_msg = function() {
+    var show_error_msg = function(msg) {
         $("#modal-container .close_icon").show();
 
         // Change modal content
         $("#modal-container .msg-content").html(
-            '寄送中'
+            msg
             );
         $("#modal-container .modal-footer").html(
             ''

@@ -16,12 +16,12 @@ class Election(ndb.Model):
     name is used for db query,
     for human readable name plse use title and description
     """
-    name = ndb.StringProperty()
-    title = ndb.StringProperty()
     description = ndb.StringProperty()
-    start_date = ndb.DateTimeProperty()
     end_date = ndb.DateTimeProperty()
+    name = ndb.StringProperty()
+    start_date = ndb.DateTimeProperty()
     started = ndb.BooleanProperty(default=True)
+    title = ndb.StringProperty()
 
     @classmethod
     def unfinished_elections(cls):
@@ -31,27 +31,29 @@ class Election(ndb.Model):
         elections = qry.order(-cls.end_date).fetch(20)
         return elections
 
-    def to_dict(self):
+    def serialize(self):
+        """ convert Election object to python dictionary """
         data = {
-            'title': self.title,
             'description': self.description,
+            'end_date': self.end_date.isoformat(),
+            'start_date': self.start_date.isoformat(),
+            'title': self.title,
             'websafe_key': self.key.urlsafe(),
         }
         return data
 
-    # please cache this!!
-    def full_election_data(self):
-        """ Get the nested voting """
+    @property
+    def positions(self):
+        """ Returns Positions under the same entity group """
         positions = Position.query(ancestor=self.key).fetch()
-        positions_dict = [pos.to_dict() for pos in positions]
+        return positions
 
-        data = {
-            'title': self.title,
-            'description': self.description,
-            'start_date': self.start_date.isoformat(),
-            'end_date': self.end_date.isoformat(),
-            'positions': positions_dict,
-        }
+    # TODO(Olala): need to cache this method call
+    def deep_serialize(self):
+        """ Get the nested voting """
+        data = self.serialize()
+        position_dict_list = [p.deep_serialize() for p in self.positions]
+        data['positions'] = position_dict_list
         return data
 
 
@@ -61,15 +63,32 @@ class Position(ndb.Model):
     name is used for db query,
     for human readable name please use title and description
     """
-    name = ndb.StringProperty()
-    title = ndb.StringProperty()
-    description = ndb.StringProperty()
-    votes_per_person = ndb.IntegerProperty()
-    num_elected = ndb.IntegerProperty()
     candidate_keys = ndb.KeyProperty(repeated=True)
+    description = ndb.StringProperty()
+    name = ndb.StringProperty()
+    num_elected = ndb.IntegerProperty()
+    title = ndb.StringProperty()
+    votes_per_person = ndb.IntegerProperty()
 
-    def to_dict(self):
-        return {'pos': self.key}
+    @property
+    def candidates(self):
+        candidates = ndb.get_multi(self.candidate_keys)
+        return sorted(candidates, key=lambda x: x.voting_index)
+
+    def serialize(self):
+        """ convert Position object to python dictionary """
+        data = {
+            'description': self.description,
+            'num_elected': self.num_elected,
+            'title': self.title,
+            'votes_per_person': self.votes_per_person,
+        }
+        return data
+
+    def deep_serialize(self):
+        data = self.serialize()
+        data['candidates'] = [c.serialize() for c in self.candidates]
+        return data
 
 
 class Candidate(ndb.Model):
@@ -77,12 +96,24 @@ class Candidate(ndb.Model):
 
     key: election_id.position_id.candidate_id as key
     """
-    voting_index = ndb.IntegerProperty()
-    name = ndb.StringProperty()
-    description = ndb.TextProperty()
-    department = ndb.StringProperty()
     avatar = ndb.StringProperty()
+    department = ndb.StringProperty()
+    description = ndb.TextProperty()
+    name = ndb.StringProperty()
     num_votes = ndb.IntegerProperty()
+    voting_index = ndb.IntegerProperty()
+
+    def serialize(self):
+        """ convert Position object to python dictionary """
+        data = {
+            'avatar': self.avatar,
+            'department': self.department,
+            'description': self.description,
+            'name': self.name,
+            'num_votes': self.num_votes,
+            'voting_index': self.voting_index,
+        }
+        return data
 
 
 class Vote(ndb.Model):

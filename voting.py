@@ -21,7 +21,8 @@ app.config['DEBUG'] = True  # turn to false on production
 def _get_data_from_token(ticked_id):
     """ Returns corresponding User and Election Object """
     logger.error('_is_valid_ticket Not Implemented Yet!!')
-    return VotingUser()
+    election = Election.query().get()  # temp get any election
+    return (VotingUser(), election)
 
 
 @app.template_filter('aj')
@@ -32,7 +33,7 @@ def angular_js_filter(s):
 # -------- pages --------
 @app.route("/", methods=['GET'])
 def welcome():
-    elections = [e.to_dict() for e in Election.unfinished_elections()]
+    elections = [e.serialize() for e in Election.unfinished_elections()]
     content = {'elections': elections}
     return render_template('welcome.html', content=content)
 
@@ -44,7 +45,7 @@ def voting_index(websafe_key):
     logger.error('Got election: %s', election)
     if not election or not election.started:
         abort(404)
-    election_data = election.to_dict()
+    election_data = election.serialize()
     content = {'election': election_data}
     return render_template('register.html', content=content)
 
@@ -156,9 +157,8 @@ def get_ticket(token):
         if user.voted:
             return render_template('alreadyvoted.html')
         else:
-            data = election.full_election_data()
-            content = {'data': data}
-            return render_template('vote.html', content=content)
+            election = election.deep_serialize()
+            return render_template('vote.html', election=election)
     elif request.method == 'POST':
         logger.error('POST vote/<token>/ not implemented')
         return jsonify({'result': 'fail'})

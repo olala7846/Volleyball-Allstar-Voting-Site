@@ -1,11 +1,34 @@
 {% extends "allstar.html" %}
 {% block morehead %}
-  <link rel="stylesheet" href="/css/welcome.css">
+  <link rel="stylesheet" href="/css/vote.css">
 {% endblock %}
 {% block content %}
  <div class="container" ng-app="voteApp">
-  <div class="row" ng-controller="VoteController">
+  <div ng-controller="VoteController">
     <h1>{{'message'|aj}}</h1>
+    <h1>{{election.title}}</h1>
+    <h4>{{election.description}}</h4>
+    {% for position in election.positions %}
+    <div class="row">
+      {% for candidate in position.candidates %}
+      <div class="col-lg-4 col-sm-6">
+        <!-- card -->
+        <div class="card">
+          <img class="card-img-top" src="http://placehold.it/300x200"
+                                    alt="{{candidate.name}}">
+          <div class="card-block">
+            <h4 class="card-title">{{candidate.name}}</h4>
+            <div class="card-text candidate-description">{{candidate.description}}</div>
+          </div>
+          <div class="card-block">
+            <a href="#" class="btn btn-primary">投他一票</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+    </div>
+    {% endfor %}
   </div>
 </div>
 {% endblock %}

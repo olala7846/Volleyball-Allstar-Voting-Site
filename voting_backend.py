@@ -200,7 +200,7 @@ class VotingApi(remote.Service):
         # get websafe_election_key if in request
         if not request.websafe_key:
             raise endpoints.BadRequestException("require electino key")
-        result = _factory_election_data(None)
+        result = _factory_election_data(request.websafe_key)
         return SimpleMessage(msg=result)
 
     @endpoints.method(message_types.VoidMessage, SimpleMessage,

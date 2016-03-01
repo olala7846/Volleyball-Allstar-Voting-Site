@@ -161,7 +161,7 @@ def get_ticket(token):
             return render_template('vote.html', election=election)
     elif request.method == 'POST':
         logger.error('POST vote/<token>/ not implemented')
-        return jsonify({'result': 'fail'})
+        return abort(500)
 
 
 @app.errorhandler(404)

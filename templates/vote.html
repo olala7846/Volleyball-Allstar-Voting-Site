@@ -8,17 +8,25 @@
 {% block content %}
  <div class="container" ng-app="voteApp">
   <div ng-controller="VoteController" ng-init="init(data)">
-    <h1 ng-cloak>{{"election.title"|aj}}</h1>
+    <div class="jumbotron jumbotron-fluid">
+      <div class="container">
+        <h3 class="display-4">開始投票</h3>
+        <div class="row" ng-cloak>
+          <div class="col-sm-6 col-md-4" ng-repeat="position in election.positions">
+              <h5> - {{"position.title"|aj}} {{"position.votes_per_person"|aj}} 票</h5>
+          </div>
+        </div>
+      </div>
+    </div>
     <div ng-repeat="position in election.positions" ng-cloak>
 
       <div class="row">
         <div class="col-xs-12">
           <h3>{{"position.title"|aj}}</h3>
         </div>
-        <div class="col-lg-3 col-xs-6 col-sm-4" ng-repeat="candidate in position.candidates"
-             ng-class="{'position-invalid': !position.valid}">
+        <div class="col-lg-3 col-sm-6 col-md-4" ng-repeat="candidate in position.candidates">
           <!-- card -->
-          <div class="card" ng-class="{'card-inverse': candidate.selected, 'card-info': candidate.selected}">
+          <div class="card" ng-class="candidateClass(candidate)">
             <div class="card-img-top avatar-container">
               <img class="avatar-img" src="http://placehold.it/350x250">
             </div>
@@ -34,7 +42,7 @@
             <div class="card-block">
               <button type="button" class="btn btn-primary"
                       ng-click="toggleCandidate(candidate)">
-                投他一票
+                {{"candidate.btnTitle"|aj}}
               </button>
             </div>
           </div>

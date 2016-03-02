@@ -5,6 +5,8 @@ from flask import Flask, render_template, request, jsonify
 from google.appengine.api import mail
 from models import VotingUser
 import uuid
+import math
+import datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,15 +31,10 @@ def voting_index(voting_id):
 def _send_voting_email(voting_user):
     """ Create voting user and send voting email with token to user
     Input:
-        voting_user: VotingUser, the userto be sent.
+        voting_user: VotingUser, the user to be sent.
     Output:
         is_sent: bool, an email is sent successfully.
     """
-    # TODO: use time instead of email count to constrain user.
-    voting_user.email_count += 1
-    key = voting_user.put()
-    key.get()  # for strong consistency
-
     # Send email by gmail api
     voting_link = "http://ntuvb-allstar.appspot.com/voting/" + voting_user.token
     email_content = u"投票請進：" + voting_link
@@ -48,8 +45,28 @@ def _send_voting_email(voting_user):
 
     mail.send_mail(**base_mail_options)
 
+    # Record email count
+    voting_user.email_count += 1
+    key = voting_user.put()
+    key.get()  # for strong consistency
+
     logger.info("Email is sent to %s" % voting_user.student_id)
     return True
+
+
+def _get_rest_wait_time(voting_user):
+    """ Create voting user and send voting email with token to user
+    Input:
+        voting_user: VotingUser, the user to be sent.
+    Output:
+        rest_wait_time: int, the rest wait time in minute.
+    """
+    if voting_user.email_count > 0:
+        minute_diff = int((datetime.datetime.now() - voting_user.create_time).total_seconds() / 60)
+        minutes_should_wait = 10 * math.pow(2, voting_user.email_count - 1)
+        if minute_diff < minutes_should_wait:
+            return minutes_should_wait - minute_diff
+    return 0
 
 
 @app.route("/api/send_voting_email", methods=["POST"])
@@ -60,7 +77,7 @@ def send_voting_email():
         forced_send: bool, send voting email anyway.
     Output:
         is_sent: bool, an email is sent in this request.
-        sent_count: int, the count of emails sent for the student_id.
+        rest_wait_time: int, the rest wait time to send email in minute.
         voted: bool, whether the user is voted.
         error_message: str, be empty string if no error.
     """
@@ -68,6 +85,7 @@ def send_voting_email():
     forced_send = True if request.form.get('forced_send') == 'true' else False
     is_sent = False
     error_message = ""
+    rest_wait_time = 0
 
     try:
         # Get VotingUser with given lowercase_student_id
@@ -76,7 +94,8 @@ def send_voting_email():
         if voting_user:
             # Only send voting email to existing user when forced_send is set
             # and less than 3 emails are sent for the user.
-            if forced_send and voting_user.email_count < 3:
+            rest_wait_time = _get_rest_wait_time(voting_user)
+            if voting_user.email_count == 0 or (forced_send and rest_wait_time == 0):
                 is_sent = _send_voting_email(voting_user)
         else:
             # If VotingUser does not exist, create one and send email
@@ -94,7 +113,7 @@ def send_voting_email():
     # TODO: use time instead of email count to constrain user.
     result = {
         "is_sent": is_sent,
-        "email_count": voting_user.email_count if voting_user else 0,
+        "rest_wait_time": rest_wait_time,
         "voted": voting_user.voted,
         "error_message": error_message
     }

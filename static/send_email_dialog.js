@@ -32,7 +32,7 @@ var sendEmailDialog = (function() {
                     show_error_msg(data.error_message);
                 }
                 else {
-                    show_ask_resent_msg(student_id, data.email_count);
+                    show_ask_resent_msg(student_id, data.rest_wait_time);
                 }
             },
             error: function(data) {
@@ -108,11 +108,11 @@ var sendEmailDialog = (function() {
             ''
             );
     };
-    var show_ask_resent_msg = function(student_id, email_count) {
+    var show_ask_resent_msg = function(student_id, rest_wait_time) {
         $("#modal-container .close_icon").show();
 
         // Change modal content
-        var enable_resend = email_count < 3;
+        var enable_resend = rest_wait_time == 0;
         var disable_button_css = "";
         if (!enable_resend) {
             disable_button_css = "disabled";
@@ -125,7 +125,7 @@ var sendEmailDialog = (function() {
             '<a class="btn btn-primary" href="">前往台大信箱</a>' +
             '<a class="btn btn-primary ' + disable_button_css + '" onclick="sendEmailDialog.send_email(\'' + student_id + '\',true);">再寄一次</a>' +
             '</div>' +
-            '<span class="button-message">你剩' + (3 - email_count) + '次寄送機會</span>'
+            '<span class="button-message">你剩' + rest_wait_time + '分鐘後才能再寄一次</span>'
             );
     };
     ret.init = init;

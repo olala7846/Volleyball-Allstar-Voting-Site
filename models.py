@@ -60,6 +60,7 @@ class VotingUser(ndb.Model):
     token = ndb.StringProperty()
     votes = ndb.KeyProperty(kind=Vote, repeated=True)
     email_count = ndb.IntegerProperty(default=0)
+    create_time = ndb.DateTimeProperty(auto_now_add=True)
 
 
 # API protorpc Messages

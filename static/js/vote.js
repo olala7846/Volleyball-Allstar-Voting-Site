@@ -54,8 +54,8 @@
       templateUrl: '/tpl/votecard.html',
       scope: {
         candidate: '=',
-        full: '=', // no more votes
-        positionName: '<',
+        full: '<', // no more votes
+        positionName: '<'
       },
       controller: ['$scope', function($scope){
         $scope.candidate.selected = false;
@@ -65,8 +65,6 @@
           } else {
             $scope.btnTitle = '投他一票';
           }
-          console.log($scope.full);
-
         });
         $scope.cardClass = function(){
           if($scope.candidate.selected){

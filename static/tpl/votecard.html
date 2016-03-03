@@ -5,14 +5,16 @@
   <div class="card-block">
     <h4 class="card-title">
       {{candidate.name}}
-      <span class="text-muted small">{{candidate.department}}</span>
     </h4>
+    <h6 class="text-muted"> {{candidate.department}} </h6>
     <div class="card-text candidate-description">
       {{candidate.description}}
     </div>
-    <p class="text-muted" ng-show="full">{{positionName}}已經投好投滿</p>
   </div>
   <div class="card-block">
+    <p class="text-muted" style="height: 1em;">
+      <span ng-show="full">{{positionName}}已被您投好投滿</span>
+    </p>
     <button type="button" ng-class="btnClass()"
             ng-click="toggleCandidate()" ng-disabled="!canToggle()">
       {{btnTitle}}

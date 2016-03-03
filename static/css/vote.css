@@ -1,8 +1,8 @@
 /* vote.css */
 .candidate-description {
   width: 100%;
-  height: 300px;
-  overflow: hidden;
+  height: 250px;
+  overflow: scroll;
   text-overflow: ellipsis;
 }
 .avatar-container {

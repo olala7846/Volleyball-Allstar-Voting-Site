@@ -26,26 +26,7 @@
         </div>
         <div class="col-lg-3 col-sm-6 col-md-4" ng-repeat="candidate in position.candidates">
           <!-- card -->
-          <div class="card" ng-class="candidateClass(candidate)">
-            <div class="card-img-top avatar-container">
-              <img class="avatar-img" src="http://placehold.it/350x250">
-            </div>
-            <div class="card-block">
-              <h4 class="card-title">
-                {{"candidate.name"|aj}}
-                <span class="text-muted small">{{"candidate.department"|aj}}</span>
-              </h4>
-              <div class="card-text candidate-description">
-                {{"candidate.description"|aj}}
-              </div>
-            </div>
-            <div class="card-block">
-              <button type="button" class="btn btn-primary"
-                      ng-click="toggleCandidate(candidate)">
-                {{"candidate.btnTitle"|aj}}
-              </button>
-            </div>
-          </div>
+          <vote-card candidate="candidate" full="false"></vote-card>
         </div>
       </div>
 

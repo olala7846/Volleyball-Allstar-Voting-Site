@@ -1,0 +1,20 @@
+<div class="card" ng-class="cardClass()">
+  <div class="card-img-top avatar-container">
+    <img class="avatar-img" src="http://placehold.it/350x250">
+  </div>
+  <div class="card-block">
+    <h4 class="card-title">
+      {{candidate.name}}
+      <span class="text-muted small">{{candidate.department}}</span>
+    </h4>
+    <div class="card-text candidate-description">
+      {{candidate.description}}
+    </div>
+  </div>
+  <div class="card-block">
+    <button type="button" ng-class="btnClass()"
+            ng-click="toggleCandidate()" ng-disabled="!canToggle()">
+      {{btnTitle}}
+    </button>
+  </div>
+</div>

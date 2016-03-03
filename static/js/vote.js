@@ -1,7 +1,8 @@
 /* global _ */
 // vote.js
-angular.module('voteApp', [])
-  .controller('VoteController', ['$scope', '$window', function($scope, $window){
+(function(angular){
+  var app = angular.module('voteApp', []);
+  app.controller('VoteController', ['$scope', '$window', function($scope, $window){
     $scope.election = $window.data;
     var positions = $scope.election.positions;
 
@@ -35,21 +36,6 @@ angular.module('voteApp', [])
       $scope.validateVotes();
     };
 
-    $scope.candidateClass = function(candidate){
-      var candidatePosition = _.find($scope.election.positions, function(position){
-        return _.indexOf(position.candidates, candidate) != -1;
-      });
-      if(candidatePosition.valid) {
-        if(candidate.selected){
-          return 'card-inverse card-success';
-        } else {
-          return '';
-        }
-      } else {
-        return 'card-inverse card-danger';
-      }
-    };
-
     function initCandidates(){
       for(var i in positions){
         var candidates = positions[i].candidates;
@@ -61,5 +47,45 @@ angular.module('voteApp', [])
 
     initCandidates();
     $scope.validateVotes();  // initial validation
-
   }]);
+  app.directive('voteCard', function(){
+    return {
+      restrict: 'E',
+      templateUrl: '/tpl/votecard.html',
+      scope: {
+        candidate: '=',
+        full: '=' // no more votes
+      },
+      controller: ['$scope', function($scope){
+        $scope.candidate.selected = false;
+        $scope.$watch('candidate.selected', function(selected){
+          if(selected){
+            $scope.btnTitle = '收回選票';
+          } else {
+            $scope.btnTitle = '投他一票';
+          }
+
+        });
+        $scope.cardClass = function(){
+          if($scope.candidate.selected){
+            return 'card-inverse card-success';
+          }
+          return '';
+        };
+        $scope.btnClass = function(){
+          if($scope.candidate.selected){
+            return 'btn btn-danger';
+          }
+          return 'btn btn-primary';
+        };
+        $scope.canToggle = function(){
+          return $scope.candidate.voted || !$scope.full;
+        };
+        $scope.toggleCandidate = function(){
+          $scope.candidate.selected = !$scope.candidate.selected;
+        };
+
+      }]
+    };
+  });
+}(angular));

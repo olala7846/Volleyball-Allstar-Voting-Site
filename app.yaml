@@ -19,6 +19,9 @@ handlers:
 - url: /js
   static_dir: static/js
 
+- url: /tpl
+  static_dir: static/tpl
+
 - url: /hello
   script: helloworld.app
 

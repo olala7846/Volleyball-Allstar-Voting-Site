@@ -55,7 +55,7 @@
       scope: {
         candidate: '=',
         full: '<', // no more votes
-        positionName: '<'
+        voteStatus: '<'
       },
       controller: ['$scope', function($scope){
         $scope.candidate.selected = false;
@@ -98,10 +98,17 @@
       controller: ['$scope', function($scope){
         $scope.full = false;
         $scope.$watch('position.candidates', function(candidates){
+          var votesPerPerson = $scope.position.votes_per_person;
           var totalVotes = _.reduce(candidates, function(voted, candidate){
             return voted + (candidate.selected? 1:0);
           }, 0);
-          $scope.full = (totalVotes >= $scope.position.votes_per_person);
+          $scope.full = (totalVotes >= votesPerPerson);
+          if($scope.full){
+            $scope.voteStatus = $scope.position.title+'已投好投滿';
+          }else{
+            $scope.voteStatus = $scope.position.title+'已投'+totalVotes+'/'+votesPerPerson;
+          }
+          console.log($scope.voteStatus);
 
         }, true);  // watch deep
       }]

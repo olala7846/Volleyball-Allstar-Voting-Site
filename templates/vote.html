@@ -18,19 +18,11 @@
         </div>
       </div>
     </div>
+
     <div ng-repeat="position in election.positions" ng-cloak>
-
-      <div class="row">
-        <div class="col-xs-12">
-          <h3>{{"position.title"|aj}}</h3>
-        </div>
-        <div class="col-lg-3 col-sm-6 col-md-4" ng-repeat="candidate in position.candidates">
-          <!-- card -->
-          <vote-card candidate="candidate" full="false"></vote-card>
-        </div>
-      </div>
-
+      <position-cards position="position"></position-cards>
     </div>
+
   </div>
   <div class="jumbotron jumbotron-fluid" ng-show="false">
     <div class="container">

@@ -10,6 +10,7 @@
     <div class="card-text candidate-description">
       {{candidate.description}}
     </div>
+    <p class="text-muted" ng-show="full">{{positionName}}已經投好投滿</p>
   </div>
   <div class="card-block">
     <button type="button" ng-class="btnClass()"

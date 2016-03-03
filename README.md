@@ -5,6 +5,7 @@ To start your own GAE project, please reference https://github.com/olala7846/GAE
 ## Requirements
 1. Python 2.7, Pypi, virtualenv
 2. Bower
+3. AngularJS version 1.5
 
 
 ## Setup

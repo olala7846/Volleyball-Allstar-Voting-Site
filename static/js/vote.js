@@ -54,7 +54,8 @@
       templateUrl: '/tpl/votecard.html',
       scope: {
         candidate: '=',
-        full: '=' // no more votes
+        full: '=', // no more votes
+        positionName: '<',
       },
       controller: ['$scope', function($scope){
         $scope.candidate.selected = false;
@@ -64,6 +65,7 @@
           } else {
             $scope.btnTitle = '投他一票';
           }
+          console.log($scope.full);
 
         });
         $scope.cardClass = function(){
@@ -79,12 +81,31 @@
           return 'btn btn-primary';
         };
         $scope.canToggle = function(){
-          return $scope.candidate.voted || !$scope.full;
+          return $scope.candidate.selected || !$scope.full;
         };
         $scope.toggleCandidate = function(){
           $scope.candidate.selected = !$scope.candidate.selected;
         };
 
+      }]
+    };
+  });
+  app.directive('positionCards', function(){
+    return {
+      restrict: 'E',
+      templateUrl: '/tpl/positioncards.html',
+      scope: {
+        position: '='
+      },
+      controller: ['$scope', function($scope){
+        $scope.full = false;
+        $scope.$watch('position.candidates', function(candidates){
+          var totalVotes = _.reduce(candidates, function(voted, candidate){
+            return voted + (candidate.selected? 1:0);
+          }, 0);
+          $scope.full = (totalVotes >= $scope.position.votes_per_person);
+
+        }, true);  // watch deep
       }]
     };
   });

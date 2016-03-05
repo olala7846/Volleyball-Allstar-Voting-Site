@@ -27,26 +27,8 @@ def _get_data_from_token(ticked_id):
 
 @app.template_filter('aj')
 def angular_js_filter(s):
+    """ example: {{'angular expressioins'|aj}} """
     return '{{'+s+'}}'
-
-
-# -------- pages --------
-@app.route("/", methods=['GET'])
-def welcome():
-    elections = [e.serialize() for e in Election.unfinished_elections()]
-    return render_template('welcome.html', elections=elections)
-
-
-@app.route("/register/<websafe_key>/", methods=['GET'])
-def voting_index(websafe_key):
-    election_key = ndb.Key(urlsafe=websafe_key)
-    election = election_key.get()
-    logger.error('Got election: %s', election)
-    if not election or not election.started:
-        abort(404)
-    election_data = election.serialize()
-    content = {'election': election_data}
-    return render_template('register.html', content=content)
 
 
 def _send_voting_email(voting_user):
@@ -57,7 +39,7 @@ def _send_voting_email(voting_user):
         is_sent: bool, an email is sent successfully.
     """
     # Send email by gmail api
-    voting_link = "http://ntuvb-allstar.appspot.com/voting/"\
+    voting_link = "http://ntuvb-allstar.appspot.com/vote/"\
                   + voting_user.token
     email_content = u"投票請進：" + voting_link
     base_mail_options = {"sender": "ins.huang@gmail.com",
@@ -90,6 +72,25 @@ def _get_rest_wait_time(voting_user):
         if minute_diff < minutes_should_wait:
             return minutes_should_wait - minute_diff
     return 0
+
+
+# -------- pages --------
+@app.route("/", methods=['GET'])
+def welcome():
+    elections = [e.serialize() for e in Election.unfinished_elections()]
+    return render_template('welcome.html', elections=elections)
+
+
+@app.route("/register/<websafe_key>/", methods=['GET'])
+def voting_index(websafe_key):
+    election_key = ndb.Key(urlsafe=websafe_key)
+    election = election_key.get()
+    logger.error('Got election: %s', election)
+    if not election or not election.started:
+        abort(404)
+    election_data = election.serialize()
+    content = {'election': election_data}
+    return render_template('register.html', content=content)
 
 
 @app.route("/api/send_voting_email", methods=["POST"])

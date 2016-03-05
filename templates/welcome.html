@@ -5,12 +5,7 @@
 {% endblock %}
 
 {% block content %}
-  <div class="jumbotron jumbotron-fluid">
-    <div class="container">
-      <h1 class="display-3">第六屆台大排球明星賽</h1>
-      <p class="lead text-right">STARTED SINCE 2011</p>
-    </div>
-  </div>
+  <!-- modal -->
   <div id="modal-container">
     <div class="modal fade" aria-hidden="false">
       <div class="modal-dialog">
@@ -31,31 +26,43 @@
       </div>
     </div>
   </div>
-  <div class="row">
-    {% for election in elections %}
-    <div class="col-xs-12">
-      <div class="jumbotron">
-        <h1>{{ election.title }}</h1>
-        <p>{{ election.description }}</p>
-        <p><a class="btn btn-primary btn-lg want-vote" href="#">我要投票 (modal)</a></p>
-        <p>
-          <a class="btn btn-primary btn-lg" href="/register/{{election.websafe_key}}/">
-            開始投票 (anchor)
-          </a>
-        </p>
+
+  <div class="container">
+    <!-- heading -->
+    <div class="jumbotron jumbotron-fluid">
+      <div class="container">
+        <h1 class="display-3">第六屆台大排球明星賽</h1>
+        <p class="lead text-right">STARTED SINCE 2011</p>
       </div>
     </div>
-    {% endfor %}
-    {% if elections.length == 0 %}
-      <h2>目前沒有投票進行中...</h2>
 
-    {% endif %}
+    <!-- votes -->
+    <div class="row">
+      {% for election in elections %}
+      <div class="col-xs-12">
+        <div class="jumbotron">
+          <h1>{{ election.title }}</h1>
+          <p>{{ election.description }}</p>
+          <p><a class="btn btn-primary btn-lg want-vote" href="#">我要投票 (modal)</a></p>
+          <p>
+            <a class="btn btn-primary btn-lg" href="/register/{{election.websafe_key}}/">
+              開始投票 (anchor)
+            </a>
+          </p>
+        </div>
+      </div>
+      {% endfor %}
+      {% if elections.length == 0 %}
+        <h2>目前沒有投票進行中...</h2>
+
+      {% endif %}
+      </div>
     </div>
   </div>
 {% endblock %}
 
 {% block extra_script %}
-<script src="/static/send_email_dialog.js"></script>
+<script src="/js/send_email_dialog.js"></script>
 <script type="text/javascript">
 $(function() {
     sendEmailDialog.init();

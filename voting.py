@@ -34,8 +34,7 @@ def angular_js_filter(s):
 @app.route("/", methods=['GET'])
 def welcome():
     elections = [e.serialize() for e in Election.unfinished_elections()]
-    content = {'elections': elections}
-    return render_template('welcome.html', content=content)
+    return render_template('welcome.html', elections=elections)
 
 
 @app.route("/register/<websafe_key>/", methods=['GET'])

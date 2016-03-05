@@ -32,39 +32,24 @@
     </div>
   </div>
   <div class="row">
-    {% for election in content.elections %}
+    {% for election in elections %}
     <div class="col-xs-12">
       <div class="jumbotron">
         <h1>{{ election.title }}</h1>
         <p>{{ election.description }}</p>
         <p><a class="btn btn-primary btn-lg want-vote" href="#">我要投票 (modal)</a></p>
         <p>
-          <a class="btn btn-primary btn-lg" href="/vote/{{election.websafe_key}}/">
+          <a class="btn btn-primary btn-lg" href="/register/{{election.websafe_key}}/">
             開始投票 (anchor)
           </a>
         </p>
       </div>
     </div>
-  </div>
-  <div class="container">
-    <div class="row">
-      {% for election in content.elections %}
-      <div class="col-xs-12">
-        <div class="jumbotron">
-          <h1>{{ election.title }}</h1>
-          <p>{{ election.description }}</p>
-          <p>
-            <a class="btn btn-primary btn-lg" href="/register/{{election.websafe_key}}/">
-              開始投票
-            </a>
-          </p>
-        </div>
-      </div>
-      {% endfor %}
-      {% if content.elections.length == 0 %}
-        <h2>目前沒有投票進行中...</h2>
+    {% endfor %}
+    {% if elections.length == 0 %}
+      <h2>目前沒有投票進行中...</h2>
 
-      {% endif %}
+    {% endif %}
     </div>
   </div>
 {% endblock %}

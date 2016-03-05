@@ -106,6 +106,7 @@ class Candidate(ndb.Model):
     def serialize(self):
         """ convert Position object to python dictionary """
         data = {
+            'id': self.key.urlsafe(),
             'avatar': self.avatar,
             'department': self.department,
             'description': self.description,

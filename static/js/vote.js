@@ -2,52 +2,47 @@
 // vote.js
 (function(angular){
   var app = angular.module('voteApp', []);
-  app.controller('VoteController', ['$scope', '$window', function($scope, $window){
-    $scope.election = $window.data;
-    var positions = $scope.election.positions;
+  app.controller('VoteController',
+    ['$scope', '$window', '$http', function($scope, $window, $http){
+      $scope.init = function(){
+        $scope.election = $window.userdata.election;
+        $scope.token = $window.userdata.token;
+      };
 
-    $scope.validateVotes = function(){
-      for(var i in positions){
-        var position = positions[i];
-        var votesPerPerson = position.votes_per_person;
-        var candidates = position.candidates;
-        var results = _.countBy(candidates, function(candidate){
-          return candidate.selected? 'selected':'notSelected';
-        });
-        position.voted = results.selected || 0;
-        position.valid = position.voted <= votesPerPerson;
-      }
-    };
-
-    function updateCandidate(candidate){
-      if(!candidate.selected){
-        candidate.selected = false;
-      }
-      candidate.btnTitle = candidate.selected? '收回選票':'投他一票';
-    }
-
-    $scope.toggleCandidate = function(candidate) {
-      if(!candidate.selected){
-        candidate.selected = true;
-      } else {
-        candidate.selected = false;
-      }
-      updateCandidate(candidate);
-      $scope.validateVotes();
-    };
-
-    function initCandidates(){
-      for(var i in positions){
-        var candidates = positions[i].candidates;
-        for(var j in candidates){
-          updateCandidate(candidates[j]);
+      function aggrecateVotes(){
+        var allVotes = [];
+        var positions = $scope.election.positions;
+        for(var i in positions){
+          var position = positions[i];
+          var votesPerPerson = position.votes_per_person;
+          var positionVotes = _.filter(position.candidates, function(candidate){
+            return candidate.selected;
+          });
+          if(positionVotes.length > votesPerPerson){
+            return undefined;  // :( invalid vote
+          }
+          allVotes = allVotes.concat(positionVotes);
         }
+        return allVotes;
       }
-    }
 
-    initCandidates();
-    $scope.validateVotes();  // initial validation
-  }]);
+      $scope.submitVotes = function(){
+        var allVotes = aggrecateVotes();
+        if(allVotes){
+          // submit vote request
+          var config = {timeout: 10000};
+          var ids = _.map(allVotes, function(candidate){
+            return candidate.id;
+          });
+          var param = {token: $scope.token, ids: ids};
+          $http.post('/vote/', param, config).then(function(response){
+            console.log('success:', response);
+          }, function(err){
+            console.log(err);
+          });
+        }
+      };
+    }]);
   app.directive('voteCard', function(){
     return {
       restrict: 'E',
@@ -99,16 +94,15 @@
         $scope.full = false;
         $scope.$watch('position.candidates', function(candidates){
           var votesPerPerson = $scope.position.votes_per_person;
-          var totalVotes = _.reduce(candidates, function(voted, candidate){
-            return voted + (candidate.selected? 1:0);
-          }, 0);
-          $scope.full = (totalVotes >= votesPerPerson);
+          var totalVotes = _.filter(candidates, function(candidate){
+            return candidate.selected;
+          });
+          $scope.full = (totalVotes.length >= votesPerPerson);
           if($scope.full){
             $scope.voteStatus = $scope.position.title+'已投好投滿';
           }else{
-            $scope.voteStatus = $scope.position.title+'已投'+totalVotes+'/'+votesPerPerson;
+            $scope.voteStatus = $scope.position.title+'已投'+totalVotes.length+'/'+votesPerPerson;
           }
-          console.log($scope.voteStatus);
 
         }, true);  // watch deep
       }]

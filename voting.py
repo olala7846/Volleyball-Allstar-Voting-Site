@@ -158,7 +158,8 @@ def get_ticket(token):
             return render_template('alreadyvoted.html')
         else:
             election = election.deep_serialize()
-            return render_template('vote.html', election=election)
+            return render_template('vote.html', election=election,
+                                   token=token)
     elif request.method == 'POST':
         logger.error('POST vote/<token>/ not implemented')
         return abort(500)

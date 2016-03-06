@@ -24,22 +24,21 @@
         </ul>
       </div>
 
-      <form action="">
-        <div class="card-block">
-          <div class="input-group" ng-class="inputGroupClass">
-            <input type="text" class="form-control" ng-model="ntuldap"
-                   ng-change="validate()" placeholder="例: B01234567"
-                   aria-describedby="basic-addon2">
-            <span class="input-group-addon">@ntu.edu.tw</span>
-          </div>
+      <div class="card-block">
+        <div class="input-group" ng-class="inputGroupClass">
+          <input type="text" class="form-control" ng-model="schoolId"
+                 ng-change="validate()" placeholder="例: B01234567"
+                 aria-describedby="basic-addon2">
+          <span class="input-group-addon">@ntu.edu.tw</span>
         </div>
+      </div>
 
-        <div class="card-block">
-          <button class="btn btn-primary" ng-disabled="!valid">
-            開始投票!
-          </button>
-        </div>
-      </form>
+      <div class="card-block">
+        <button class="btn btn-primary" ng-disabled="!valid"
+                ng-click="requestEmail()">
+          開始投票!
+        </button>
+      </div>
 
     </div>
 

@@ -14,7 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.config['DEBUG'] = True  # turn to false on production
+app.config['DEBUG'] = False  # turn to false on production
 
 
 # -------- utils --------
@@ -23,6 +23,20 @@ def _get_data_from_token(ticked_id):
     logger.error('_is_valid_ticket Not Implemented Yet!!')
     election = Election.query().get()  # temp get any election
     return (VotingUser(), election)
+
+
+def _get_post_data(request):
+    """ returns post data both form/json format """
+    content_type = request.headers['Content-Type']
+    post_data = None
+    if 'application/x-www-form-urlencoded' in content_type:
+        post_data = request.form
+    elif 'application/json' in content_type:
+        post_data = request.get_json()
+    else:
+        logger.error('Unexpected Content-Type format: %s',
+                     content_type)
+    return post_data
 
 
 @app.template_filter('aj')
@@ -105,8 +119,9 @@ def send_voting_email():
         voted: bool, whether the user is voted.
         error_message: str, be empty string if no error.
     """
-    lowercase_student_id = request.form.get('student_id').lower()
-    forced_send = True if request.form.get('forced_send') == 'true' else False
+    post_data = _get_post_data(request)
+    lowercase_student_id = post_data.get('student_id').lower()
+    forced_send = True if post_data.get('forced_send') == 'true' else False
     is_sent = False
     error_message = ""
     rest_wait_time = 0

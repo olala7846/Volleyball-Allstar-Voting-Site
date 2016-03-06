@@ -7,6 +7,7 @@ from google.appengine.ext import ndb
 from models import VotingUser, Election
 
 from datetime import datetime
+from itertools import groupby
 import uuid
 import math
 import logging
@@ -14,15 +15,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.config['DEBUG'] = False  # turn to false on production
+app.config['DEBUG'] = True  # turn to false on production
 
 
 # -------- utils --------
-def _get_data_from_token(ticked_id):
-    """ Returns corresponding User and Election Object """
-    logger.error('_is_valid_ticket Not Implemented Yet!!')
-    election = Election.query().get()  # temp get any election
-    return (VotingUser(), election)
+def _get_user_from_token(token):
+    """ Returns corresponding VotingUser """
+    user = VotingUser.query(VotingUser.token == token).get()
+    return user
 
 
 def _get_post_data(request):
@@ -99,7 +99,6 @@ def welcome():
 def voting_index(websafe_key):
     election_key = ndb.Key(urlsafe=websafe_key)
     election = election_key.get()
-    logger.error('Got election: %s', election)
     if not election or not election.started:
         abort(404)
     election_data = election.serialize()
@@ -113,6 +112,7 @@ def send_voting_email():
     Input:
         student_id: string, student_id.
         forced_send: bool, send voting email anyway.
+        election_key: target election urlsafe key
     Output:
         is_sent: bool, an email is sent in this request.
         rest_wait_time: int, the rest wait time to send email in minute.
@@ -122,6 +122,7 @@ def send_voting_email():
     post_data = _get_post_data(request)
     lowercase_student_id = post_data.get('student_id').lower()
     forced_send = True if post_data.get('forced_send') == 'true' else False
+    election_key = post_data['election_key']
     is_sent = False
     error_message = ""
     rest_wait_time = 0
@@ -141,8 +142,12 @@ def send_voting_email():
         else:
             # If VotingUser does not exist, create one and send email
             token = str(uuid.uuid4().hex)
+            election_key_object = ndb.Key(urlsafe=election_key)
             voting_user = VotingUser(
-                    student_id=lowercase_student_id, voted=False, token=token)
+                    election_key=election_key_object,
+                    student_id=lowercase_student_id,
+                    voted=False,
+                    token=token)
             key = voting_user.put()
             key.get()  # for strong consistency
             is_sent = _send_voting_email(voting_user)
@@ -163,21 +168,70 @@ def send_voting_email():
     return jsonify(**result)
 
 
-@app.route("/vote/<token>/", methods=['GET', 'POST'])
-def get_ticket(token):
-    user, election = _get_data_from_token(token)
-    if not user:
+@app.route("/vote/<token>/", methods=['GET'])
+def get_vote_page(token):
+    """ get vote page with url in email """
+    user = _get_user_from_token(token)
+    if user is None:
         abort(404)
-    if request.method == 'GET':
-        if user.voted:
-            return render_template('alreadyvoted.html')
-        else:
-            election = election.deep_serialize()
-            return render_template('vote.html', election=election,
-                                   token=token)
-    elif request.method == 'POST':
-        logger.error('POST vote/<token>/ not implemented')
-        return abort(500)
+
+    if user.voted:
+        return render_template('alreadyvoted.html')
+    else:
+        election = user.election_key.get()
+        election_dict = election.deep_serialize()
+        return render_template('vote.html',
+                               election=election_dict,
+                               token=token)  # pass token for angular
+
+
+@app.route("/api/vote/<token>/", methods=['POST'])
+def vote_with_data(token):
+    """ get vote page with url in email """
+    user = _get_user_from_token(token)
+    post_data = request.get_json()
+    candidate_ids = post_data['candidate_ids']
+    if user is None:
+        return abort(500, {'message': 'stop this ...'})
+
+    # check vote count valid
+    candidate_keys = [ndb.Key(urlsafe=key) for key in candidate_ids]
+    candidates = ndb.get_multi(candidate_keys)
+
+    def _get_position_key(candidate):
+        return candidate.key.parent()
+    candidates = sorted(candidates, key=_get_position_key)
+    for key, group in groupby(candidates, key=_get_position_key):
+        position = key.get()
+        if position.votes_per_person < len(list(group)):
+            return abort(500, {'message': 'ilegal vote'})
+
+    try:
+        _do_vote(user.key, candidate_keys)
+    except Exception, e:
+        logger.error('Exception while _do_vote: %s', e)
+        abort(500)
+    return "success"
+
+
+@ndb.transactional(xg=True, retries=3)
+def _do_vote(user_key, candidate_keys):
+    """ save vote to db after checked data """
+    # check user not voted
+    user = user_key.get()  # check latest value
+    if user.voted:
+        return False
+
+    user.votes = candidate_keys
+    user.voted = True
+    user.put()
+
+    candidates = ndb.get_multi(candidate_keys)
+    for candidate in candidates:
+        candidate.num_votes = candidate.num_votes + 1
+    ndb.put_multi(candidates)
+
+    return True
 
 
 @app.errorhandler(404)

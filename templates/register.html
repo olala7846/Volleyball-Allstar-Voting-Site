@@ -1,6 +1,9 @@
 {% extends "allstar.html" %}
 {% block morehead %}
   <link rel="stylesheet" href="/css/register.css">
+  <script type="text/javascript">
+    var election_key = '{{content.election.websafe_key}}';
+  </script>
 {% endblock %}
 
 {% block content %}

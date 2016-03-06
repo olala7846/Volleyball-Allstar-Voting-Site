@@ -120,7 +120,7 @@ def _factory_election_data(websafe_election_key):
     election_key = election.put()
 
     for pos_data in POSITION_DATA:
-        data_dictionaries = pos_data['data']
+        position_data = pos_data['data']
         del pos_data['data']
 
         position_name = pos_data['name']
@@ -132,20 +132,18 @@ def _factory_election_data(websafe_election_key):
             position_key = ndb.Key(Position, position_id, parent=election_key)
             position = Position(key=position_key)
         position.populate(**pos_data)
-        position.put()
+        position_key = position.put()
 
         # remove all roles under position
-        candidate_keys = position.candidate_keys
-        candidates = ndb.get_multi(candidate_keys)
-        ndb.delete_multi(candidates)
+        ndb.delete_multi(position.candidate_keys)
 
         # create all roles from data
         candidates = []
-        for index, data_dict in enumerate(data_dictionaries):
+        for index, data_dict in enumerate(position_data):
             candidate_id = ndb.Model.allocate_ids(
-                    size=1, parent=election_key)[0]
-            candidate_key = ndb.Key(Candidate, candidate_id,
-                                    parent=election_key)
+                    size=1, parent=position_key)[0]
+            candidate_key = ndb.Key(
+                    Candidate, candidate_id, parent=position_key)
             candidate = Candidate(key=candidate_key)
             data_dict['voting_index'] = index
             candidate.populate(**data_dict)

@@ -117,9 +117,9 @@ def welcome():
     return render_template('welcome.html', elections=elections)
 
 
-@app.route("/register/<websafe_key>/", methods=['GET'])
-def voting_index(websafe_key):
-    election_key = ndb.Key(urlsafe=websafe_key)
+@app.route("/register/<websafe_election_key>/", methods=['GET'])
+def voting_index(websafe_election_key):
+    election_key = ndb.Key(urlsafe=websafe_election_key)
     election = election_key.get()
     if not election or not election.started:
         abort(404)
@@ -201,7 +201,9 @@ def get_vote_page(token):
         abort(404)
 
     if user.voted:
-        return render_template('alreadyvoted.html')
+        websafe_election_key = user.election_key.urlsafe()
+        return render_template('alreadyvoted.html',
+                websafe_election_key=websafe_election_key)
     else:
         election = user.election_key.get()
         election_dict = election.deep_serialize()
@@ -242,6 +244,13 @@ def vote_with_data(token):
     except Exception:
         abort(500, 'Unexpected error, please try again later')
     return "success"
+
+
+@app.route("/results/<websafe_election_key>/", methods=['GET'])
+def see_results(websafe_election_key):
+    election = ndb.Key(urlsafe=websafe_election_key).get()
+    election_dict = election.deep_serialize()
+    return render_template('results.html', election=election_dict)
 
 
 @app.errorhandler(404)

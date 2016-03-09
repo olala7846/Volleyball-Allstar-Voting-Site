@@ -39,6 +39,28 @@ def _get_post_data(request):
     return post_data
 
 
+@ndb.transactional(xg=True, retries=3)
+def _do_vote(user_key, candidate_keys):
+    """ Save vote to database after integrity check
+    user_key: VotingUser ndb key
+    candidate_yes: list of Candidate ndb key
+    """
+    # check user not voted
+    user = user_key.get()  # check latest value
+    if user.voted:
+        logger.error('%s already voted', user.student_id)
+        raise Exception('Already voted')
+
+    user.votes = candidate_keys
+    user.voted = True
+    user.put()
+
+    candidates = ndb.get_multi(candidate_keys)
+    for candidate in candidates:
+        candidate.num_votes = candidate.num_votes + 1
+    ndb.put_multi(candidates)
+
+
 @app.template_filter('aj')
 def angular_js_filter(s):
     """ example: {{'angular expressioins'|aj}} """
@@ -170,7 +192,10 @@ def send_voting_email():
 
 @app.route("/vote/<token>/", methods=['GET'])
 def get_vote_page(token):
-    """ get vote page with url in email """
+    """ Display vote page from url in email
+
+    <token>: unique token stored in UserProfile
+    """
     user = _get_user_from_token(token)
     if user is None:
         abort(404)
@@ -187,12 +212,18 @@ def get_vote_page(token):
 
 @app.route("/api/vote/<token>/", methods=['POST'])
 def vote_with_data(token):
-    """ get vote page with url in email """
+    """ Save user selected candidates in database and update
+        user.voted and candidate.num_votes
+
+    <token>: unique token relative to a VotingUser
+    candidate_ids: list of datastore candidate keys
+        in urlsafe format
+    """
     user = _get_user_from_token(token)
     post_data = request.get_json()
     candidate_ids = post_data['candidate_ids']
     if user is None:
-        return abort(500, {'message': 'stop this ...'})
+        return abort(500, 'Invalid token')
 
     # check vote count valid
     candidate_keys = [ndb.Key(urlsafe=key) for key in candidate_ids]
@@ -204,34 +235,13 @@ def vote_with_data(token):
     for key, group in groupby(candidates, key=_get_position_key):
         position = key.get()
         if position.votes_per_person < len(list(group)):
-            return abort(500, {'message': 'ilegal vote'})
+            return abort(500, 'Invalid votes')
 
     try:
         _do_vote(user.key, candidate_keys)
-    except Exception, e:
-        logger.error('Exception while _do_vote: %s', e)
-        abort(500)
+    except Exception:
+        abort(500, 'Unexpected error, please try again later')
     return "success"
-
-
-@ndb.transactional(xg=True, retries=3)
-def _do_vote(user_key, candidate_keys):
-    """ save vote to db after checked data """
-    # check user not voted
-    user = user_key.get()  # check latest value
-    if user.voted:
-        return False
-
-    user.votes = candidate_keys
-    user.voted = True
-    user.put()
-
-    candidates = ndb.get_multi(candidate_keys)
-    for candidate in candidates:
-        candidate.num_votes = candidate.num_votes + 1
-    ndb.put_multi(candidates)
-
-    return True
 
 
 @app.errorhandler(404)

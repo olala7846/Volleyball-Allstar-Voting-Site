@@ -7,6 +7,10 @@ api_version: 1
 threadsafe: true
 
 handlers:
+- url: /favicon.ico
+  static_files: static/img/favicon.ico
+  upload: static/img/favicon.ico
+
 - url: /bower
   static_dir: bower_components
 

@@ -1,6 +1,9 @@
 {% extends "allstar.html" %}
 {% block morehead %}
   <link rel="stylesheet" href="/css/register.css">
+  <script type="text/javascript">
+    var election_key = '{{content.election.websafe_key}}';
+  </script>
 {% endblock %}
 
 {% block content %}
@@ -26,7 +29,7 @@
 
       <div class="card-block">
         <div class="input-group" ng-class="inputGroupClass">
-          <input type="text" class="form-control" ng-model="schoolId"
+          <input type="text" class="form-control" ng-model="studentId"
                  ng-change="validate()" placeholder="例: B01234567"
                  aria-describedby="basic-addon2">
           <span class="input-group-addon">@ntu.edu.tw</span>

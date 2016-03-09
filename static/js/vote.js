@@ -34,8 +34,9 @@
           var ids = _.map(allVotes, function(candidate){
             return candidate.id;
           });
-          var param = {token: $scope.token, ids: ids};
-          $http.post('/vote/', param, config).then(function(response){
+          var param = {candidate_ids: ids};
+          var apiPath = '/api/vote/' + $scope.token + '/';
+          $http.post(apiPath, param, config).then(function(response){
             console.log('success:', response);
           }, function(err){
             console.log(err);

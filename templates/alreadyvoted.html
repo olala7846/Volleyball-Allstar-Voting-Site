@@ -1,0 +1,15 @@
+{% extends "allstar.html" %}
+{% block morehead %}
+  <link rel="stylesheet" href="/css/vote.css">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>您已完成投票</h2>
+  <a href="/results/{{websafe_election_key}}"><h4>觀看投票結果</h4></a>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+
+{% endblock %}

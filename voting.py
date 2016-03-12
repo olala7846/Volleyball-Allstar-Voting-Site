@@ -5,6 +5,7 @@ from flask import Flask, render_template, request, jsonify, abort
 from google.appengine.api import mail
 from google.appengine.ext import ndb
 from models import VotingUser, Election
+from dateutil import parser
 
 from datetime import datetime
 from itertools import groupby
@@ -67,6 +68,13 @@ def angular_js_filter(s):
     return '{{'+s+'}}'
 
 
+@app.template_filter('datetime')
+def format_datetime(date_string):
+    """ format ISO string into MM/DD/YYYY """
+    date = parser.parse(date_string)
+    return date.strftime('%m/%d/%Y')
+
+
 def _send_voting_email(voting_user):
     """ Create voting user and send voting email with token to user
     Input:
@@ -124,8 +132,7 @@ def voting_index(websafe_election_key):
     if not election or not election.started:
         abort(404)
     election_data = election.serialize()
-    content = {'election': election_data}
-    return render_template('register.html', content=content)
+    return render_template('register.html', election=election_data)
 
 
 @app.route("/api/send_voting_email", methods=["POST"])
@@ -202,7 +209,8 @@ def get_vote_page(token):
 
     if user.voted:
         websafe_election_key = user.election_key.urlsafe()
-        return render_template('alreadyvoted.html',
+        return render_template(
+                'alreadyvoted.html',
                 websafe_election_key=websafe_election_key)
     else:
         election = user.election_key.get()
@@ -251,6 +259,26 @@ def see_results(websafe_election_key):
     election = ndb.Key(urlsafe=websafe_election_key).get()
     election_dict = election.deep_serialize()
     return render_template('results.html', election=election_dict)
+
+
+@app.route("/mail_sent/", methods=['GET'])
+def mail_sent():
+    message = u"信件已寄出"
+    url = {
+        'title': u'前往台大信箱',
+        'href': 'https://wmail1.cc.ntu.edu.tw/imp/login.php'
+    }
+    return render_template('message.html', message=message, url=url)
+
+
+@app.route("/sent_fail/", methods=['GET'])
+def sent_fail():
+    message = u"郵件寄送失敗，請稍候再試一次"
+    url = {
+        'title': u'回投票首頁',
+        'href': '/'
+    }
+    return render_template('message.html', message=message, url=url)
 
 
 @app.errorhandler(404)

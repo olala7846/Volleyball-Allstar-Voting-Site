@@ -27,10 +27,10 @@ angular.module('registerApp', [])
           student_id: $scope.studentId,
           election_key: $scope.electionKey
         };
-        $http.post(apiPath, param).then(function(response){
-          console.log(response);
-        }, function(err){
-          console.log(err);
+        $http.post(apiPath, param).then(function(){
+          window.location.href = '/mail_sent/';
+        }, function(){
+          window.location.href = '/sent_fail/';
         });
       };
 

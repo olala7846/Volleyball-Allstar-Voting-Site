@@ -5,6 +5,7 @@ from flask import Flask, render_template, request, jsonify, abort
 from google.appengine.api import mail
 from google.appengine.ext import ndb
 from models import VotingUser, Election
+from dateutil import parser
 
 from datetime import datetime
 from itertools import groupby
@@ -19,6 +20,25 @@ app.config['DEBUG'] = True  # turn to false on production
 
 
 # -------- utils --------
+@ndb.transactional(retries=3)
+def _get_or_create_voting_user(websafe_election_key, student_id):
+    election_key = ndb.Key(urlsafe=websafe_election_key)
+    if election_key is None:
+        raise Exception('Invalid election key')
+    if student_id != student_id.lower():
+        raise Exception('Student ID should be lower case')
+    voting_user_key = ndb.Key(VotingUser, student_id, parent=election_key)
+    voting_user = voting_user_key.get()
+    if not voting_user:
+        token = str(uuid.uuid4().hex)
+        voting_user = VotingUser(id=student_id,
+                                 student_id=student_id,
+                                 parent=election_key,
+                                 token=token)
+        voting_user_key = voting_user.put()
+    return voting_user
+
+
 def _get_user_from_token(token):
     """ Returns corresponding VotingUser """
     user = VotingUser.query(VotingUser.token == token).get()
@@ -48,7 +68,7 @@ def _do_vote(user_key, candidate_keys):
     # check user not voted
     user = user_key.get()  # check latest value
     if user.voted:
-        logger.error('%s already voted', user.student_id)
+        logger.error('_do_vote: %s already voted', user.student_id)
         raise Exception('Already voted')
 
     user.votes = candidate_keys
@@ -65,6 +85,13 @@ def _do_vote(user_key, candidate_keys):
 def angular_js_filter(s):
     """ example: {{'angular expressioins'|aj}} """
     return '{{'+s+'}}'
+
+
+@app.template_filter('datetime')
+def format_datetime(date_string):
+    """ format ISO string into MM/DD/YYYY """
+    date = parser.parse(date_string)
+    return date.strftime('%m/%d/%Y')
 
 
 def _send_voting_email(voting_user):
@@ -124,8 +151,7 @@ def voting_index(websafe_election_key):
     if not election or not election.started:
         abort(404)
     election_data = election.serialize()
-    content = {'election': election_data}
-    return render_template('register.html', content=content)
+    return render_template('register.html', election=election_data)
 
 
 @app.route("/api/send_voting_email", methods=["POST"])
@@ -140,45 +166,37 @@ def send_voting_email():
         rest_wait_time: int, the rest wait time to send email in minute.
         voted: bool, whether the user is voted.
         error_message: str, be empty string if no error.
+    Error message:
+        returns 200 OK but with response.data
+        'already voted'
+        'send fail'
     """
     post_data = _get_post_data(request)
     lowercase_student_id = post_data.get('student_id').lower()
     forced_send = True if post_data.get('forced_send') == 'true' else False
-    election_key = post_data['election_key']
+    websafe_election_key = post_data['election_key']
     is_sent = False
     error_message = ""
     rest_wait_time = 0
 
-    try:
-        # Get VotingUser with given lowercase_student_id
-        voting_user = VotingUser.query(
-                VotingUser.student_id == lowercase_student_id).get()
+    voting_user = _get_or_create_voting_user(
+            websafe_election_key, lowercase_student_id)
+    if voting_user.voted:
+        return 'already voted'
 
-        if voting_user:
-            # Only send voting email to existing user when forced_send is set
-            # and less than 3 emails are sent for the user.
-            rest_wait_time = _get_rest_wait_time(voting_user)
-            if voting_user.email_count == 0 or (
-                    forced_send and rest_wait_time == 0):
-                is_sent = _send_voting_email(voting_user)
-        else:
-            # If VotingUser does not exist, create one and send email
-            token = str(uuid.uuid4().hex)
-            election_key_object = ndb.Key(urlsafe=election_key)
-            voting_user = VotingUser(
-                    election_key=election_key_object,
-                    student_id=lowercase_student_id,
-                    voted=False,
-                    token=token)
-            key = voting_user.put()
-            key.get()  # for strong consistency
+    try:
+        # Only send voting email to existing user when forced_send is set
+        # and less than 3 emails are sent for the user.
+        rest_wait_time = _get_rest_wait_time(voting_user)
+        if voting_user.email_count == 0 or (
+                forced_send and rest_wait_time == 0):
             is_sent = _send_voting_email(voting_user)
     except Exception, e:
         logger.error("Error in send_voting_email")
         logger.error("student_id: %s, forced_send: %s" % (
             lowercase_student_id, forced_send))
         logger.error(e)
-        error_message = "寄送認證信失敗，請聯絡工作人員。"
+        return 'send fail'
 
     # TODO: use time instead of email count to constrain user.
     result = {
@@ -202,8 +220,7 @@ def get_vote_page(token):
 
     if user.voted:
         websafe_election_key = user.election_key.urlsafe()
-        return render_template('alreadyvoted.html',
-                websafe_election_key=websafe_election_key)
+        return already_voted(websafe_election_key)
     else:
         election = user.election_key.get()
         election_dict = election.deep_serialize()
@@ -225,7 +242,7 @@ def vote_with_data(token):
     post_data = request.get_json()
     candidate_ids = post_data['candidate_ids']
     if user is None:
-        return abort(500, 'Invalid token')
+        return abort(403, 'Invalid token')
 
     # check vote count valid
     candidate_keys = [ndb.Key(urlsafe=key) for key in candidate_ids]
@@ -237,12 +254,12 @@ def vote_with_data(token):
     for key, group in groupby(candidates, key=_get_position_key):
         position = key.get()
         if position.votes_per_person < len(list(group)):
-            return abort(500, 'Invalid votes')
+            return abort(403, 'Invalid votes')
 
     try:
         _do_vote(user.key, candidate_keys)
     except Exception:
-        abort(500, 'Unexpected error, please try again later')
+        abort(403, 'Transaction fail')
     return "success"
 
 
@@ -253,11 +270,51 @@ def see_results(websafe_election_key):
     return render_template('results.html', election=election_dict)
 
 
+@app.route("/mail_sent/", methods=['GET'])
+def mail_sent():
+    message = u"信件已寄出"
+    url = {
+        'title': u'前往台大信箱',
+        'href': 'https://wmail1.cc.ntu.edu.tw/imp/login.php'
+    }
+    return render_template('message.html', message=message, url=url)
+
+
+@app.route("/sent_failed/", methods=['GET'])
+def sent_failed():
+    message = u"郵件寄送失敗，請稍候再試一次"
+    url = {
+        'title': u'回投票首頁',
+        'href': '/'
+    }
+    return render_template('message.html', message=message, url=url)
+
+
+@app.route("/voted/<websafe_election_key>/", methods=['GET'])
+def already_voted(websafe_election_key):
+    election = ndb.Key(urlsafe=websafe_election_key).get()
+    if not election:
+        abort(500)
+    message = u"抱歉，您已經投過票"
+    url = {
+        'title': u'觀看投票結果',
+        'href': '/results/'+websafe_election_key
+    }
+    return render_template('message.html', message=message, url=url)
+
+
+@app.route("/error/", methods=['GET'])
+def error_page():
+    message = u"發生錯誤，請稍後再試或聯絡工作人員"
+    return render_template('message.html', message=message)
+
+
 @app.errorhandler(404)
 def page_not_found(error):
-    logger.error('404 not found %s', request)
+    logger.error('404 not found: %s', request)
     msg = 'voting: 404 not found %s' % request
     return msg
+
 
 if __name__ == "__main__":
     app.run()

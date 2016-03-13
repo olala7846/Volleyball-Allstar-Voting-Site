@@ -36,10 +36,11 @@
           });
           var param = {candidate_ids: ids};
           var apiPath = '/api/vote/' + $scope.token + '/';
-          $http.post(apiPath, param, config).then(function(response){
-            console.log('success:', response);
+          $http.post(apiPath, param, config).then(function(){
+            window.location.href = '/results/'+$scope.election.websafe_key;
           }, function(err){
             console.log(err);
+            window.location.href = '/error/';
           });
         }
       };

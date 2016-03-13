@@ -20,6 +20,25 @@ app.config['DEBUG'] = True  # turn to false on production
 
 
 # -------- utils --------
+@ndb.transactional(retries=3)
+def _get_or_create_voting_user(websafe_election_key, student_id):
+    election_key = ndb.Key(urlsafe=websafe_election_key)
+    if election_key is None:
+        raise Exception('Invalid election key')
+    if student_id != student_id.lower():
+        raise Exception('Student ID should be lower case')
+    voting_user_key = ndb.Key(VotingUser, student_id, parent=election_key)
+    voting_user = voting_user_key.get()
+    if not voting_user:
+        token = str(uuid.uuid4().hex)
+        voting_user = VotingUser(id=student_id,
+                                 student_id=student_id,
+                                 parent=election_key,
+                                 token=token)
+        voting_user_key = voting_user.put()
+    return voting_user
+
+
 def _get_user_from_token(token):
     """ Returns corresponding VotingUser """
     user = VotingUser.query(VotingUser.token == token).get()
@@ -49,7 +68,7 @@ def _do_vote(user_key, candidate_keys):
     # check user not voted
     user = user_key.get()  # check latest value
     if user.voted:
-        logger.error('%s already voted', user.student_id)
+        logger.error('_do_vote: %s already voted', user.student_id)
         raise Exception('Already voted')
 
     user.votes = candidate_keys
@@ -160,29 +179,17 @@ def send_voting_email():
     error_message = ""
     rest_wait_time = 0
 
-    voting_user = VotingUser.query(
-            VotingUser.student_id == lowercase_student_id).get()
+    voting_user = _get_or_create_voting_user(
+            websafe_election_key, lowercase_student_id)
     if voting_user.voted:
         return 'already voted'
 
     try:
-        if voting_user:
-            # Only send voting email to existing user when forced_send is set
-            # and less than 3 emails are sent for the user.
-            rest_wait_time = _get_rest_wait_time(voting_user)
-            if voting_user.email_count == 0 or (
-                    forced_send and rest_wait_time == 0):
-                is_sent = _send_voting_email(voting_user)
-        else:
-            # If VotingUser does not exist, create one and send email
-            token = str(uuid.uuid4().hex)
-            election_key = ndb.Key(urlsafe=websafe_election_key)
-            voting_user = VotingUser(
-                    election_key=election_key,
-                    student_id=lowercase_student_id,
-                    token=token)
-            key = voting_user.put()
-            key.get()  # for strong consistency
+        # Only send voting email to existing user when forced_send is set
+        # and less than 3 emails are sent for the user.
+        rest_wait_time = _get_rest_wait_time(voting_user)
+        if voting_user.email_count == 0 or (
+                forced_send and rest_wait_time == 0):
             is_sent = _send_voting_email(voting_user)
     except Exception, e:
         logger.error("Error in send_voting_email")
@@ -304,7 +311,7 @@ def error_page():
 
 @app.errorhandler(404)
 def page_not_found(error):
-    logger.error('404 not found %s', request)
+    logger.error('404 not found: %s', request)
     msg = 'voting: 404 not found %s' % request
     return msg
 

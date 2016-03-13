@@ -122,7 +122,6 @@ class VotingUser(ndb.Model):
         token: generated uuid for user
         votes: selected candidate keyes
     """
-    election_key = ndb.KeyProperty(kind=Election, required=True)
     student_id = ndb.StringProperty()
     voted = ndb.BooleanProperty(default=False)
     token = ndb.StringProperty()
@@ -130,6 +129,10 @@ class VotingUser(ndb.Model):
     email_count = ndb.IntegerProperty(default=0)
     create_time = ndb.DateTimeProperty(auto_now_add=True)
     vote_time = ndb.DateTimeProperty()
+
+    @property
+    def election_key(self):
+        return self.key.parent()
 
 
 # API protorpc Messages

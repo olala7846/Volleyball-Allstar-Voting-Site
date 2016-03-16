@@ -34,11 +34,13 @@
           var ids = _.map(allVotes, function(candidate){
             return candidate.id;
           });
-          var param = {token: $scope.token, ids: ids};
-          $http.post('/vote/', param, config).then(function(response){
-            console.log('success:', response);
+          var param = {candidate_ids: ids};
+          var apiPath = '/api/vote/' + $scope.token + '/';
+          $http.post(apiPath, param, config).then(function(){
+            window.location.href = '/results/'+$scope.election.websafe_key;
           }, function(err){
             console.log(err);
+            window.location.href = '/error/';
           });
         }
       };

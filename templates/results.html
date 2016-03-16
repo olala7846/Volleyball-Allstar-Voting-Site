@@ -1,0 +1,33 @@
+{% extends "allstar.html" %}
+{% block morehead %}
+  <link rel="stylesheet" href="/css/results.css">
+  <script type="text/javascript">
+    var election = {{election|tojson|safe}};
+  </script>
+{% endblock %}
+
+{% block content %}
+<div ng-app="resultsApp" ng-controller="ElectionResultsController" ng-init="init()">
+  <div class="container">
+    <div class="row" ng-repeat="position in election.positions">
+      <div class="card">
+        <div class="card-block">
+          <h4 class="card-title">
+            {{'position.title'|aj}}
+          </h4>
+        </div>
+        <div class="card-block">
+          <p ng-repeat="candidate in position.candidates">
+          {{"candidate.name"|aj}} : {{"candidate.num_votes"|aj}}
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+  <script src="/js/results.js"></script>
+{% endblock %}

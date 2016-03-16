@@ -6,7 +6,6 @@ GAE Datastore models
 
 from datetime import datetime
 from protorpc import messages
-from protorpc import message_types
 from google.appengine.ext import ndb
 
 
@@ -100,7 +99,7 @@ class Candidate(ndb.Model):
     department = ndb.StringProperty()
     description = ndb.TextProperty()
     name = ndb.StringProperty()
-    num_votes = ndb.IntegerProperty()
+    num_votes = ndb.IntegerProperty(default=0)
     voting_index = ndb.IntegerProperty()
 
     def serialize(self):
@@ -117,20 +116,23 @@ class Candidate(ndb.Model):
         return data
 
 
-class Vote(ndb.Model):
-    """ People who vote and who they vote """
-    positoin = ndb.KeyProperty(kind=Position)
-    candidates = ndb.KeyProperty(kind=Candidate, repeated=True)
-
-
 class VotingUser(ndb.Model):
-    """ election_id.student_id """
+    """ Representing a single user in a election
+        election_key: target election ndb key
+        token: generated uuid for user
+        votes: selected candidate keyes
+    """
     student_id = ndb.StringProperty()
-    voted = ndb.BooleanProperty()
+    voted = ndb.BooleanProperty(default=False)
     token = ndb.StringProperty()
-    votes = ndb.KeyProperty(kind=Vote, repeated=True)
+    votes = ndb.KeyProperty(kind=Candidate, repeated=True)
     email_count = ndb.IntegerProperty(default=0)
     create_time = ndb.DateTimeProperty(auto_now_add=True)
+    vote_time = ndb.DateTimeProperty()
+
+    @property
+    def election_key(self):
+        return self.key.parent()
 
 
 # API protorpc Messages

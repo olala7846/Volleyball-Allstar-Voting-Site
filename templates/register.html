@@ -1,6 +1,9 @@
 {% extends "allstar.html" %}
 {% block morehead %}
   <link rel="stylesheet" href="/css/register.css">
+  <script type="text/javascript">
+    var election_key = '{{election.websafe_key}}';
+  </script>
 {% endblock %}
 
 {% block content %}
@@ -12,21 +15,21 @@
         <h4 class="card-title">開始投票</h4>
         <p class="card-text">
           請依照下面步驟進行投票，投票時間為
-          xxxxx ~ xxxxxx
+          {{election.start_date|datetime}} ~ {{election.end_date|datetime}}
         </p>
       </div>
 
       <div class="card-block">
         <ul class="list-group list-group-flush">
           <li class="list-group-item">1. 輸入台大信箱</li>
-          <li class="list-group-item">2. 至台大信箱收信(??分鐘內)</li>
+          <li class="list-group-item">2. 至台大信箱收信(預計半小時內寄達)</li>
           <li class="list-group-item">3. 點選信中連結開始投票</li>
         </ul>
       </div>
 
       <div class="card-block">
         <div class="input-group" ng-class="inputGroupClass">
-          <input type="text" class="form-control" ng-model="schoolId"
+          <input type="text" class="form-control" ng-model="studentId"
                  ng-change="validate()" placeholder="例: B01234567"
                  aria-describedby="basic-addon2">
           <span class="input-group-addon">@ntu.edu.tw</span>

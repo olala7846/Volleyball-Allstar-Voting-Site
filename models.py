@@ -83,6 +83,7 @@ class Position(ndb.Model):
         data = {
             'description': self.description,
             'num_elected': self.num_elected,
+            'name': self.name,
             'title': self.title,
             'votes_per_person': self.votes_per_person,
         }

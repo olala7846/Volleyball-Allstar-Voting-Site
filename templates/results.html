@@ -1,6 +1,7 @@
 {% extends "allstar.html" %}
 {% block morehead %}
   <link rel="stylesheet" href="/css/results.css">
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script type="text/javascript">
     var election = {{election|tojson|safe}};
   </script>
@@ -8,7 +9,7 @@
 
 {% block content %}
 <div ng-app="resultsApp" ng-controller="ElectionResultsController" ng-init="init()">
-  <div class="container">
+  <div class="container" ng-cloak>
     <div class="row" ng-repeat="position in election.positions">
       <div class="card">
         <div class="card-block">
@@ -16,15 +17,14 @@
             {{'position.title'|aj}}
           </h4>
         </div>
-        <div class="card-block">
-          <p ng-repeat="candidate in position.candidates">
-          {{"candidate.name"|aj}} : {{"candidate.num_votes"|aj}}
-          </p>
+        <div id="{{'position.name'|aj}}">
+          <h5> 讀取中，請稍候...  </h5>
         </div>
       </div>
     </div>
 
   </div>
+  {% include 'initializing.html' %}
 </div>
 {% endblock %}
 

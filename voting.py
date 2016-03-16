@@ -4,7 +4,10 @@
 from flask import Flask, render_template, request, jsonify, abort
 from google.appengine.api import mail
 from google.appengine.ext import ndb
+from sendgrid import SendGridClient
+from sendgrid import Mail
 from models import VotingUser, Election
+import secrets
 
 from datetime import datetime
 import uuid
@@ -15,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['DEBUG'] = False  # turn to false on production
+
+# make a secure connection to SendGrid
+sg = SendGridClient(secrets.SENDGRID_ID, secrets.SENDGRID_PASSWORD, secure=True)
 
 
 # -------- utils --------
@@ -52,16 +58,18 @@ def _send_voting_email(voting_user):
     Output:
         is_sent: bool, an email is sent successfully.
     """
-    # Send email by gmail api
+    # Make email content with token-link
     voting_link = "http://ntuvb-allstar.appspot.com/vote/"\
                   + voting_user.token
     email_content = u"投票請進：" + voting_link
-    base_mail_options = {"sender": "ins.huang@gmail.com",
-                         "to": voting_user.student_id + "@ntu.edu.tw",
-                         "subject": "2016台大排球明星賽投票認證信",
-                         "body": email_content}
 
-    mail.send_mail(**base_mail_options)
+    # Send email by gmail api
+    message = Mail()
+    message.set_subject("2016台大排球明星賽投票認證信")
+    message.set_text(email_content)
+    message.set_from("ins.huang@gmail.com")
+    message.add_to(voting_user.student_id + "@ntu.edu.tw")
+    sg.send(message)
 
     # Record email count
     voting_user.email_count += 1

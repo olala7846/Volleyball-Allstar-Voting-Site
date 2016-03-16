@@ -3,3 +3,4 @@ venv/
 bower_components/
 dev_chrome/
 db/
+secrets.py

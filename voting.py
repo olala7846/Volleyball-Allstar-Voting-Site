@@ -3,13 +3,14 @@
 
 from flask import Flask, render_template, request, jsonify, abort
 from google.appengine.ext import ndb
+from google.appengine.api import memcache
 from sendgrid import SendGridClient
 from sendgrid import Mail
 from models import VotingUser, Election
 import secrets
 from dateutil import parser
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from itertools import groupby
 import uuid
 import math
@@ -144,6 +145,30 @@ def _get_rest_wait_time(voting_user):
     return 0
 
 
+def _get_current_result_page(websafe_election_key, time_offset=0):
+    timestamp = datetime.strftime(datetime.now() + timedelta(minutes=time_offset), '%Y-%m-%d_%H-%M')
+    final_result_memcache_key = "%s_result" % websafe_election_key
+    final_result = memcache.get(final_result_memcache_key)
+    if final_result is not None:
+        return final_result
+
+    # The election is not ended, get result according to time_offset
+    memcache_key = final_result_memcache_key + timestamp
+    cached_result = memcache.get(memcache_key)
+    if cached_result is not None:
+        return cached_result
+
+    election = ndb.Key(urlsafe=websafe_election_key).get()
+    election_dict = election.deep_serialize()
+    result = render_template('results.html', election=election_dict)
+    if election.ended:
+        memcache.set(final_result_memcache_key, result, time=7*24*60*60)
+    else:
+        memcache.set(memcache_key, result, time=60*60)
+    return result
+
+
+
 # -------- pages --------
 @app.route("/", methods=['GET'])
 def welcome():
@@ -272,9 +297,8 @@ def vote_with_data(token):
 
 @app.route("/results/<websafe_election_key>/", methods=['GET'])
 def see_results(websafe_election_key):
-    election = ndb.Key(urlsafe=websafe_election_key).get()
-    election_dict = election.deep_serialize()
-    return render_template('results.html', election=election_dict)
+    # Get result of last minute
+    return _get_current_result_page(websafe_election_key, -1)
 
 
 @app.route("/mail_sent/", methods=['GET'])
@@ -314,6 +338,21 @@ def already_voted(websafe_election_key):
 def error_page():
     message = u"發生錯誤，請稍後再試或聯絡工作人員"
     return render_template('message.html', message=message)
+
+
+@app.route("/admin/cronjob", methods=['GET'])
+def cronjob():
+    elections = Election.query().fetch(20)
+    for election in elections:
+        # Update started value of the election
+        if not election.started and datetime.now() > election.start_date:
+            election.started = True
+            election_key = election.put()
+            election_key.get()
+
+        # Cache current result
+        if election.started and not election.ended:
+            _get_current_result_page(str(election.key()), 0)
 
 
 @app.errorhandler(404)

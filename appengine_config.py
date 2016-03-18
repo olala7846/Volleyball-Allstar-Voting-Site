@@ -1,7 +1,7 @@
 # Created by olala7846@gmail.com
 # appengine_config gets loaded when starting a new application instance
 
-import vendor
+from google.appengine.ext import vendor
 
 # add libraries to python path
 vendor.add('lib')

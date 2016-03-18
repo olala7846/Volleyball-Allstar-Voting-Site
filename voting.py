@@ -180,7 +180,7 @@ def welcome():
 def voting_index(websafe_election_key):
     election_key = ndb.Key(urlsafe=websafe_election_key)
     election = election_key.get()
-    if not election or not election.started:
+    if not election or not election.running:
         abort(404)
     election_data = election.serialize()
     return render_template('register.html', election=election_data)

@@ -154,18 +154,24 @@ def _factory_election_data(websafe_election_key):
     return "update all data successfully"
 
 
-def _update_unended_elections():
-    """ iterate unstarted elections and update status """
-    qry = Election.query(Election.started == False)
+def _update_election_status():
+    """ iterate not running elections and update status
+    return value: num of elections running
+    """
+    qry = Election.query()
     election_iterator = qry.iter()
     now = datetime.now()
+    total_cnt = 0
     cnt = 0
-    for elect in election_iterator:
-        if elect.start_date < now:
-            elect.started = True
-            elect.put()
+    for election in election_iterator:
+        total_cnt = total_cnt + 1
+        if election.start_date < now and now < election.end_date:
+            election.running = True
             cnt = cnt + 1
-    return cnt
+        else:
+            election.running = False
+        election.put()
+    return "%d/%d" % (cnt, total_cnt)
 
 
 # -------- API --------
@@ -205,9 +211,9 @@ class VotingApi(remote.Service):
                       path='update_election_status', http_method='GET',
                       name='updateElectionStatus')
     def update_election_status(self, request):
-        """ Updates the election.started status """
-        cnt = _update_unended_elections()
-        msg = '%d elections started' % cnt
+        """ Updates the election.running status """
+        ratio = _update_election_status()
+        msg = '%s elections running' % ratio
         return SimpleMessage(msg=msg)
 
 

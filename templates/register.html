@@ -9,14 +9,11 @@
 {% block content %}
 <div class="container" ng-app="registerApp">
   <div class="row">
-    <div class="card register-panel" ng-controller="RegisterFormController">
+    <div class="card card-transparent register-panel" ng-controller="RegisterFormController">
 
       <div class="card-block">
         <h4 class="card-title">開始投票</h4>
-        <p class="card-text">
-          請依照下面步驟進行投票，投票時間為
-          {{election.start_date|datetime}} ~ {{election.end_date|datetime}}
-        </p>
+        <h5 class="card-text"> 請依照下列步驟進行投票: </h5>
       </div>
 
       <div class="card-block">
@@ -24,6 +21,7 @@
           <li class="list-group-item">1. 輸入台大信箱</li>
           <li class="list-group-item">2. 至台大信箱收信(預計半小時內寄達)</li>
           <li class="list-group-item">3. 點選信中連結開始投票</li>
+
         </ul>
       </div>
 
@@ -34,6 +32,9 @@
                  aria-describedby="basic-addon2">
           <span class="input-group-addon">@ntu.edu.tw</span>
         </div>
+        <p class="text-muted pull-right">
+          投票時間: {{election.start_date|datetime}} ~ {{election.end_date|datetime}}
+        </p>
       </div>
 
       <div class="card-block">

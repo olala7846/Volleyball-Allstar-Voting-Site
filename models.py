@@ -19,7 +19,7 @@ class Election(ndb.Model):
     end_date = ndb.DateTimeProperty()
     name = ndb.StringProperty()
     start_date = ndb.DateTimeProperty()
-    started = ndb.BooleanProperty(default=True)
+    running = ndb.BooleanProperty(default=False)
     title = ndb.StringProperty()
 
     @classmethod
@@ -38,6 +38,7 @@ class Election(ndb.Model):
             'start_date': self.start_date.isoformat(),
             'title': self.title,
             'websafe_key': self.key.urlsafe(),
+            'running': self.running,
         }
         return data
 

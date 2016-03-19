@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # voting app
 
-from flask import Flask, render_template, request, jsonify, abort
+from flask import Flask, render_template, request, jsonify
+from flask import abort, redirect
 from google.appengine.ext import ndb
 from google.appengine.api import memcache
 from sendgrid import SendGridClient
@@ -251,8 +252,8 @@ def get_vote_page(token):
         abort(404)
 
     if user.voted:
-        websafe_election_key = user.election_key.urlsafe()
-        return already_voted(websafe_election_key)
+        voted_url = "/voted/%s/" % user.election_key.urlsafe()
+        return redirect(voted_url, code=302)
     else:
         election = user.election_key.get()
         election_dict = election.deep_serialize()

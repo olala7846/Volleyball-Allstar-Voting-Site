@@ -11,14 +11,14 @@
 <div ng-app="resultsApp" ng-controller="ElectionResultsController" ng-init="init()">
   <div class="container" ng-cloak>
     <div class="row" ng-repeat="position in election.positions">
-      <div class="card">
+      <div class="card card-shadow">
         <div class="card-block">
           <h4 class="card-title">
             {{'position.title'|aj}}
           </h4>
         </div>
         <div id="{{'position.name'|aj}}">
-          <h5> 讀取中，請稍候...  </h5>
+          <div class="loader">Loading</div>
         </div>
       </div>
     </div>

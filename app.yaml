@@ -32,6 +32,10 @@ handlers:
 - url: /_ah/spi/.*
   script: voting_backend.api
 
+- url: /admin/cronjob
+  script: voting.app
+  login: admin
+
 - url: /.*
   script: voting.app
 

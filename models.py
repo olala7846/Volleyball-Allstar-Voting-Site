@@ -47,6 +47,10 @@ class Election(ndb.Model):
         positions = Position.query(ancestor=self.key).fetch()
         return positions
 
+    @property
+    def ended(self):
+        return datetime.now() > self.end_date
+
     # TODO(Olala): need to cache this method call
     def deep_serialize(self):
         """ Get the nested voting """

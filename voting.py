@@ -359,8 +359,8 @@ def cron_update_status():
 @app.errorhandler(404)
 def page_not_found(error):
     logger.error('404 not found: %s', request)
-    msg = 'voting: 404 not found %s' % request
-    return msg
+    msg = u'<i class="fa fa-frown-o"></i> %s' % u'Oops! 迷路了嗎？'
+    return render_template('message.html', message=msg)
 
 
 if __name__ == "__main__":

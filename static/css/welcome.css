@@ -1,0 +1,18 @@
+#modal-container .modal-dialog {
+    width: 90%;
+    max-width: 500px;
+}
+#modal-container .button-message {
+    float: right;
+}
+#modal-container .msg-container {
+    display: table;
+    width: 100%;
+    text-align: center;
+    min-height: 150px;
+}
+#modal-container .msg-content {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+}

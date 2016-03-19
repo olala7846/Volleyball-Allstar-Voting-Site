@@ -340,8 +340,8 @@ def error_page():
     return render_template('message.html', message=message)
 
 
-@app.route("/admin/cronjob", methods=['GET'])
-def cronjob():
+@app.route("/cron/update_status", methods=['GET'])
+def cron_update_status():
     elections = Election.query().fetch(20)
     for election in elections:
         # Update started value of the election
@@ -352,7 +352,8 @@ def cronjob():
 
         # Cache current result
         if election.started and not election.ended:
-            _get_current_result_page(str(election.key()), 0)
+            _get_current_result_page(str(election.key.urlsafe()), 0)
+    return "success"
 
 
 @app.errorhandler(404)

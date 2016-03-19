@@ -1,6 +1,6 @@
 cron:
 
 - description: result update and check election start/end
-  url: /admin/cronjob
+  url: /cron/update_status
   schedule: every 1 minutes
   timezone: Asia/Taipei

@@ -65,7 +65,7 @@
         });
         $scope.cardClass = function(){
           if($scope.candidate.selected){
-            return 'card-inverse card-success';
+            return 'candidate-card-selected';
           }
           return '';
         };

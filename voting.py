@@ -286,7 +286,7 @@ def mail_sent():
     message = u"信件已寄出"
     url = {
         'title': u'前往台大信箱',
-        'href': 'https://wmail1.cc.ntu.edu.tw/imp/login.php'
+        'href': 'http://mail.ntu.edu.tw/'
     }
     return render_template('message.html', message=message, url=url)
 

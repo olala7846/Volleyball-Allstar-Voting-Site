@@ -11,16 +11,6 @@
 {% block content %}
 <div class="container" ng-app="voteApp">
   <div ng-controller="VoteController" ng-init="init()">
-    <div class="jumbotron jumbotron-fluid">
-      <div class="container">
-        <h3 class="display-4">開始投票</h3>
-        <div class="row" ng-cloak>
-          <div class="col-sm-6 col-md-4" ng-repeat="position in election.positions">
-              <h5> - {{"position.title"|aj}} {{"position.votes_per_person"|aj}} 票</h5>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- voting cards -->
     <div ng-repeat="position in election.positions" ng-cloak>
@@ -41,7 +31,6 @@
       </div>
 
   </div>
-  {% include 'initializing.html' %}
 </div>
 {% endblock %}
 {% block extra_script %}

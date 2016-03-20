@@ -1,7 +1,7 @@
 /* vote.css */
 .candidate-description {
   width: 100%;
-  height: 250px;
+  height: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -9,6 +9,14 @@
   width: 100%;
   height: 200px;
   overflow: hidden;
+  position: relative;
+}
+.avatar-container > .fa-check {
+  position: absolute;
+  font-size: 5em;
+  bottom: 5px;
+  right: 5px;
+
 }
 .avatar-img {
   display: block;
@@ -16,4 +24,10 @@
 }
 .position-invalid {
   background-color: red;
+}
+.candidate-card-selected {
+  background-color: #ffff99;
+}
+.position-title{
+  margin-top: 10px;
 }

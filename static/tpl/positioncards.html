@@ -1,10 +1,10 @@
-  <div class="row">
-    <div class="col-xs-12">
-      <h3>{{position.title}}</h3>
-    </div>
-    <div class="col-lg-3 col-sm-6 col-md-4" ng-repeat="candidate in position.candidates">
-      <!-- card -->
-      <vote-card candidate="candidate" full="$parent.full"
-                 vote-status="$parent.voteStatus"></vote-card>
-    </div>
+<div class="row" ng-cloak>
+  <div class="col-xs-12">
+    <h3 class="position-title">{{position.title}}</h3>
   </div>
+  <div class="col-lg-3 col-sm-6 col-md-4" ng-repeat="candidate in position.candidates">
+    <!-- card -->
+    <vote-card candidate="candidate" full="$parent.full"
+               vote-status="$parent.voteStatus"></vote-card>
+  </div>
+</div>

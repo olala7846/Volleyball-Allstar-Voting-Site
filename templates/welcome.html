@@ -15,14 +15,16 @@
           <p>{{ election.description }}</p>
           <p class="text-muted">投票時間: {{election.start_date|datetime}} ~ {{election.end_date|datetime}}</p>
           <p>
-            {% if election.running %}
+            {% if election.can_vote %}
             <a class="btn btn-primary btn-lg" href="/register/{{election.websafe_key}}/">
               開始投票
             </a>
             {% endif %}
+            {% if election.can_see_results %}
             <a class="btn btn-primary btn-lg" href="/results/{{election.websafe_key}}/">
               觀看結果
             </a>
+            {% endif %}
           </p>
         </div>
       </div>

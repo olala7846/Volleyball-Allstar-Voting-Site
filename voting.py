@@ -4,26 +4,27 @@
 from flask import Flask, render_template, request, jsonify
 from flask import abort, redirect
 from google.appengine.ext import ndb
-from google.appengine.api import memcache
 from sendgrid import SendGridClient
 from sendgrid import Mail
 from models import VotingUser, Election
-import secrets
 from dateutil import parser
-
-from datetime import datetime, timedelta
+from datetime import datetime
 from itertools import groupby
 import uuid
 import math
 import logging
 
+import secrets
+
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.config['DEBUG'] = True  # turn to false on production
+app.config['DEBUG'] = False
 
 # make a secure connection to SendGrid
-sg = SendGridClient(secrets.SENDGRID_ID, secrets.SENDGRID_PASSWORD, secure=True)
+sg = SendGridClient(secrets.SENDGRID_ID,
+                    secrets.SENDGRID_PASSWORD,
+                    secure=True)
 
 
 # -------- utils --------
@@ -146,34 +147,10 @@ def _get_rest_wait_time(voting_user):
     return 0
 
 
-def _get_current_result_page(websafe_election_key, time_offset=0):
-    timestamp = datetime.strftime(datetime.now() + timedelta(minutes=time_offset), '%Y-%m-%d_%H-%M')
-    final_result_memcache_key = "%s_result" % websafe_election_key
-    final_result = memcache.get(final_result_memcache_key)
-    if final_result is not None:
-        return final_result
-
-    # The election is not ended, get result according to time_offset
-    memcache_key = final_result_memcache_key + timestamp
-    cached_result = memcache.get(memcache_key)
-    if cached_result is not None:
-        return cached_result
-
-    election = ndb.Key(urlsafe=websafe_election_key).get()
-    election_dict = election.deep_serialize()
-    result = render_template('results.html', election=election_dict)
-    if election.ended:
-        memcache.set(final_result_memcache_key, result, time=7*24*60*60)
-    else:
-        memcache.set(memcache_key, result, time=60*60)
-    return result
-
-
-
 # -------- pages --------
 @app.route("/", methods=['GET'])
 def welcome():
-    elections = [e.serialize() for e in Election.unfinished_elections()]
+    elections = [e.serialize() for e in Election.available_elections()]
     return render_template('welcome.html', elections=elections)
 
 
@@ -181,7 +158,7 @@ def welcome():
 def voting_index(websafe_election_key):
     election_key = ndb.Key(urlsafe=websafe_election_key)
     election = election_key.get()
-    if not election or not election.running:
+    if not election or not election.can_vote:
         abort(404)
     election_data = election.serialize()
     return render_template('register.html', election=election_data)
@@ -256,7 +233,7 @@ def get_vote_page(token):
         return redirect(voted_url, code=302)
     else:
         election = user.election_key.get()
-        election_dict = election.deep_serialize()
+        election_dict = election.cached_deep_serialize()
         return render_template('vote.html',
                                election=election_dict,
                                token=token)  # pass token for angular
@@ -299,7 +276,9 @@ def vote_with_data(token):
 @app.route("/results/<websafe_election_key>/", methods=['GET'])
 def see_results(websafe_election_key):
     # Get result of last minute
-    return _get_current_result_page(websafe_election_key, -1)
+    election = ndb.Key(urlsafe=websafe_election_key).get()
+    election_dict = election.cached_deep_serialize()
+    return render_template('results.html', election=election_dict)
 
 
 @app.route("/mail_sent/", methods=['GET'])
@@ -339,22 +318,6 @@ def already_voted(websafe_election_key):
 def error_page():
     message = u"發生錯誤，請稍後再試或聯絡工作人員"
     return render_template('message.html', message=message)
-
-
-@app.route("/cron/update_status", methods=['GET'])
-def cron_update_status():
-    elections = Election.query().fetch(20)
-    for election in elections:
-        # Update started value of the election
-        if not election.started and datetime.now() > election.start_date:
-            election.started = True
-            election_key = election.put()
-            election_key.get()
-
-        # Cache current result
-        if election.started and not election.ended:
-            _get_current_result_page(str(election.key.urlsafe()), 0)
-    return "success"
 
 
 @app.errorhandler(404)

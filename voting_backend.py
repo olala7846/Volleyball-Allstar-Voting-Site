@@ -18,6 +18,7 @@ from protorpc import message_types
 from protorpc import remote
 
 from google.appengine.ext import ndb
+from google.appengine.api import oauth
 from models import Election, Position, Candidate
 from models import ElectionForm, WebsafekeyForm
 from settings import ELECTION_DATA, POSITION_DATA
@@ -33,19 +34,18 @@ class SimpleMessage(messages.Message):
 
 
 # -------- Utilites --------
-def _is_admin(user):
-    if user is None:
-        return False
-    user_email = user.email()
-    return user_email in ADMIN_EMAILS
-
-
 @wrapt.decorator
 def admin_only(wrapped, instance, args, kwargs):
-    current_user = endpoints.get_current_user()
-    if not _is_admin(current_user):
+    endpoint_user = endpoints.get_current_user()
+    if endpoint_user is None:
         raise endpoints.UnauthorizedException('This API is admin only')
-    return wrapped(*args, **kwargs)
+
+    scope = 'https://www.googleapis.com/auth/userinfo.email'
+    is_admin = oauth.is_current_user_admin(scope)
+    if is_admin:
+        return wrapped(*args, **kwargs)
+    else:
+        raise endpoints.UnauthorizedException('This API is admin only')
 
 
 def remove_timezone(timestamp):
@@ -82,7 +82,6 @@ def request_to_dict(request):
 
 
 def _create_election(request):
-    # TODO(olala): require authentication
     data = request_to_dict(request)
     election = Election(**data)
     election.put()
@@ -155,23 +154,22 @@ def _factory_election_data(websafe_election_key):
 
 
 def _update_election_status():
-    """ iterate not running elections and update status
-    return value: num of elections running
+    """ iterate all elections and update can_vote status
+
+    return: number of votes running
     """
     qry = Election.query()
     election_iterator = qry.iter()
-    now = datetime.now()
-    total_cnt = 0
     cnt = 0
     for election in election_iterator:
-        total_cnt = total_cnt + 1
+        now = datetime.now()
         if election.start_date < now and now < election.end_date:
-            election.running = True
+            election.can_vote = True
             cnt = cnt + 1
         else:
-            election.running = False
+            election.can_vote = False
         election.put()
-    return "%d/%d" % (cnt, total_cnt)
+    return cnt
 
 
 # -------- API --------
@@ -210,10 +208,11 @@ class VotingApi(remote.Service):
     @endpoints.method(message_types.VoidMessage, SimpleMessage,
                       path='update_election_status', http_method='GET',
                       name='updateElectionStatus')
+    @admin_only
     def update_election_status(self, request):
         """ Updates the election.running status """
-        ratio = _update_election_status()
-        msg = '%s elections running' % ratio
+        running_cnt = _update_election_status()
+        msg = '%d elections running' % running_cnt
         return SimpleMessage(msg=msg)
 
 

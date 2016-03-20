@@ -4,30 +4,34 @@
 GAE Datastore models
 """
 
-from datetime import datetime
 from protorpc import messages
 from google.appengine.ext import ndb
+from google.appengine.api import memcache
 
 
 class Election(ndb.Model):
     """ Single Vote Event (e.g. 2016 Volleyball Allstar Game
 
-    name is used for db query,
-    for human readable name plse use title and description
+    name: used as readable id, should be unique
+        TODO(Olala): make it the /register and /results url
+    title: human readable name
+    can_see_results: should never vote or display results
+    can_vote: can vote
     """
     description = ndb.StringProperty()
+    start_date = ndb.DateTimeProperty()
     end_date = ndb.DateTimeProperty()
     name = ndb.StringProperty()
-    start_date = ndb.DateTimeProperty()
-    running = ndb.BooleanProperty(default=False)
     title = ndb.StringProperty()
+    can_vote = ndb.BooleanProperty(default=True)
+    can_see_results = ndb.BooleanProperty(default=True)
 
     @classmethod
-    def unfinished_elections(cls):
-        """ get first first 20 unfinished elections """
-        now = datetime.now()
-        qry = Election.query(cls.end_date > now)
-        elections = qry.order(-cls.end_date).fetch(20)
+    def available_elections(cls):
+        """ returns elections either can vote or can display retults"""
+        qry = Election.query(ndb.OR(Election.can_vote == True,
+                                    Election.can_see_results == True))
+        elections = qry.order(-cls.start_date).fetch(20)
         return elections
 
     def serialize(self):
@@ -36,9 +40,11 @@ class Election(ndb.Model):
             'description': self.description,
             'end_date': self.end_date.isoformat(),
             'start_date': self.start_date.isoformat(),
+            'name': self.name,
             'title': self.title,
             'websafe_key': self.key.urlsafe(),
-            'running': self.running,
+            'can_vote': self.can_vote,
+            'can_see_results': self.can_see_results,
         }
         return data
 
@@ -48,11 +54,16 @@ class Election(ndb.Model):
         positions = Position.query(ancestor=self.key).fetch()
         return positions
 
-    @property
-    def ended(self):
-        return datetime.now() > self.end_date
+    def cached_deep_serialize(self):
+        ELECTION_CACHE_KEY = self.key.urlsafe() + '_serialized'
+        data = memcache.get(ELECTION_CACHE_KEY)
+        if data is not None:
+            return data
+        else:
+            data = self.deep_serialize()
+            memcache.add(ELECTION_CACHE_KEY, data, 60)
+            return data
 
-    # TODO(Olala): need to cache this method call
     def deep_serialize(self):
         """ Get the nested voting """
         data = self.serialize()

@@ -13,18 +13,14 @@
     <div class="row" ng-repeat="position in election.positions">
       <div class="card card-shadow">
         <div class="card-block">
-          <h4 class="card-title">
-            {{'position.title'|aj}}
-          </h4>
-        </div>
-        <div id="{{'position.name'|aj}}">
-          <div class="loader">Loading</div>
+          <div id="{{'position.name'|aj}}">
+            {% include 'initializing.html' %}
+          </div>
         </div>
       </div>
     </div>
 
   </div>
-  {% include 'initializing.html' %}
 </div>
 {% endblock %}
 

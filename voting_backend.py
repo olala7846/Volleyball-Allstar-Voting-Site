@@ -208,7 +208,7 @@ class VotingApi(remote.Service):
     @endpoints.method(message_types.VoidMessage, SimpleMessage,
                       path='update_election_status', http_method='GET',
                       name='updateElectionStatus')
-    @admin_only
+    # @admin_only
     def update_election_status(self, request):
         """ Updates the election.running status """
         running_cnt = _update_election_status()

@@ -4,6 +4,7 @@
 from flask import Flask, render_template, request, jsonify
 from flask import abort, redirect
 from google.appengine.ext import ndb
+from google.appengine.api.taskqueue import Queue, Task
 from sendgrid import SendGridClient
 from sendgrid import Mail
 from models import VotingUser, Election
@@ -117,8 +118,8 @@ def _send_voting_email(voting_user):
         raise ValueError(msg)
     voting_link = "http://ntuvb-allstar.appspot.com/vote/"\
                   + voting_user.token
-    from_mail = "NTUManVolley@gmail.com"
-    email_content = (
+    from_email = "NTUManVolley@gmail.com"
+    email_body = (
         u"<h3>您好 {student_id}:</h3>"
         u"<p>感謝您參加{election_title} <br>"
         u"<h4><a href='{voting_link}'> 投票請由此進入 </a></h4> <br>"
@@ -128,24 +129,28 @@ def _send_voting_email(voting_user):
         student_id=voting_user.student_id,
         election_title=election.title,
         voting_link=voting_link,
-        help_mail=from_mail)
+        help_mail=from_email)
+    text_body = u"投票請進: %s" % voting_link
+    email_subject = election.title+u"投票認證信"
+    to_email = voting_user.student_id+"@ntu.edu.tw"
 
-    # Send email by sendgrid api
-    message = Mail()
-    message.set_subject(election.title+u"投票認證信")
-    message.set_html(email_content)
-    message.set_text(u"投票請進: "+voting_link)
-    message.set_from(from_mail)
-    message.add_to(voting_user.student_id + "@ntu.edu.tw")
-    # TODO(Olala): send with mail queue
-    sg.send(message)
+    queue = Queue('mail-queue')
+    queue.add(Task(
+        url='/queue/mail',
+        params={
+            'subject': email_subject,
+            'body': email_body,
+            'text_body': text_body,
+            'to': to_email,
+            'from': from_email,
+        }
+    ))
+    logger.info("Email queued: %s" % voting_user.student_id)
 
-    # Record email count
     voting_user.last_time_mail_sent = datetime.now()
     voting_user.email_count += 1
     key = voting_user.put()
     key.get()  # for strong consistency
-    logger.info("Email is sent to %s" % voting_user.student_id)
     return True
 
 
@@ -343,6 +348,36 @@ def page_not_found(error):
     logger.error('404 not found: %s', request)
     msg = u'<i class="fa fa-frown-o"></i> %s' % u'Oops! 迷路了嗎？'
     return render_template('message.html', message=msg)
+
+
+"""
+Mail handler
+"""
+
+
+@app.route("/queue/mail", methods=['POST'])
+def send_mail():
+    """
+    Send email with sendgrid sdk
+    """
+    to_email = request.form.get('to')
+    subject = request.form.get('subject')
+    body = request.form.get('body')
+    text_body = request.form.get('text_body')
+    from_email = request.form.get('from')
+
+    utf8_body = body.encode('utf-8')
+    utf8_text_body = text_body.encode('utf-8')
+
+    message = Mail()
+    message.set_subject(subject)
+    message.set_html(utf8_body)
+    message.set_text(utf8_text_body)
+    message.set_from(from_email)
+    message.add_to(to_email)
+    sg.send(message)
+    logger.info("Email is sent to %s" % to_email)
+    return ('', 204)
 
 
 if __name__ == "__main__":

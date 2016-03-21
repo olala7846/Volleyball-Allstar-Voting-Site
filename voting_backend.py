@@ -42,7 +42,8 @@ def admin_only(wrapped, instance, args, kwargs):
 
     scope = 'https://www.googleapis.com/auth/userinfo.email'
     is_admin = oauth.is_current_user_admin(scope)
-    if is_admin:
+    # only execute when user is admin or running local server
+    if is_admin or endpoint_user.email() in ADMIN_EMAILS:
         return wrapped(*args, **kwargs)
     else:
         raise endpoints.UnauthorizedException('This API is admin only')
@@ -208,7 +209,7 @@ class VotingApi(remote.Service):
     @endpoints.method(message_types.VoidMessage, SimpleMessage,
                       path='update_election_status', http_method='GET',
                       name='updateElectionStatus')
-    # @admin_only
+    @admin_only
     def update_election_status(self, request):
         """ Updates the election.running status """
         running_cnt = _update_election_status()

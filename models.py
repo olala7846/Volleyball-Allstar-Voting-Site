@@ -146,6 +146,7 @@ class VotingUser(ndb.Model):
     email_count = ndb.IntegerProperty(default=0)
     create_time = ndb.DateTimeProperty(auto_now_add=True)
     vote_time = ndb.DateTimeProperty()
+    last_time_mail_sent = ndb.DateTimeProperty()
 
     @property
     def election_key(self):

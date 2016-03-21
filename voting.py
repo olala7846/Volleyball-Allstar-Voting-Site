@@ -110,23 +110,41 @@ def _send_voting_email(voting_user):
         is_sent: bool, an email is sent successfully.
     """
     # Make email content with token-link
+    election = voting_user.key.parent().get()
+    if not isinstance(election, Election):
+        msg = 'voting_user should have election as ndb ancestpr'
+        logger.error(msg)
+        raise ValueError(msg)
     voting_link = "http://ntuvb-allstar.appspot.com/vote/"\
                   + voting_user.token
-    email_content = u"投票請進：" + voting_link
+    from_mail = "NTUManVolley@gmail.com"
+    email_content = (
+        u"<h3>您好 {student_id}:</h3>"
+        u"<p>感謝您參加{election_title} <br>"
+        u"<h4><a href='{voting_link}'> 投票請由此進入 </a></h4> <br>"
+        u"若您未曾參與本次活動，請直接刪除本封信件 <br>"
+        u"若有任何疑問請來信至: {help_mail} <br></p>"
+    ).format(
+        student_id=voting_user.student_id,
+        election_title=election.title,
+        voting_link=voting_link,
+        help_mail=from_mail)
 
-    # Send email by gmail api
+    # Send email by sendgrid api
     message = Mail()
-    message.set_subject("2016台大排球明星賽投票認證信")
-    message.set_text(email_content)
-    message.set_from("ins.huang@gmail.com")
+    message.set_subject(election.title+u"投票認證信")
+    message.set_html(email_content)
+    message.set_text(u"投票請進: "+voting_link)
+    message.set_from(from_mail)
     message.add_to(voting_user.student_id + "@ntu.edu.tw")
+    # TODO(Olala): send with mail queue
     sg.send(message)
 
     # Record email count
+    voting_user.last_time_mail_sent = datetime.now()
     voting_user.email_count += 1
     key = voting_user.put()
     key.get()  # for strong consistency
-
     logger.info("Email is sent to %s" % voting_user.student_id)
     return True
 

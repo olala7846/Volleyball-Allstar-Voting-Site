@@ -8,6 +8,7 @@
         $scope.election = $window.userdata.election;
         $scope.token = $window.userdata.token;
       };
+      $scope.sending_request = false;
 
       function aggrecateVotes(){
         var allVotes = [];
@@ -27,6 +28,7 @@
       }
 
       $scope.submitVotes = function(){
+        $scope.sending_request = true;
         var allVotes = aggrecateVotes();
         if(allVotes){
           // submit vote request
@@ -36,10 +38,11 @@
           });
           var param = {candidate_ids: ids};
           var apiPath = '/api/vote/' + $scope.token + '/';
-          $http.post(apiPath, param, config).then(function(){
+          $http.post(apiPath, param, config).then(function(response){
+            console.log('response:', response);
             window.location.href = '/results/'+$scope.election.websafe_key;
-          }, function(err){
-            console.log(err);
+          }, function(response){
+            console.log(response);
             window.location.href = '/error/';
           });
         }

@@ -23,7 +23,7 @@
           <div class="card card-block">
             <p>按下完成投票投票後等同您已經同意以下<a>使用條款</a>,您將無法修改您的選票</p>
             <button type="button" class="btn btn-primary btn-lg btn-block"
-                    ng-click="submitVotes()">
+                    ng-click="submitVotes()" ng-disabled="sending_request">
               完成投票
             </button>
           </div>

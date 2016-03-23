@@ -7,6 +7,9 @@ GAE Datastore models
 from protorpc import messages
 from google.appengine.ext import ndb
 from google.appengine.api import memcache
+from datetime import datetime, timedelta
+
+EMAIL_SEND_INTERVAL_MIN = 10
 
 
 class Election(ndb.Model):
@@ -143,14 +146,23 @@ class VotingUser(ndb.Model):
     voted = ndb.BooleanProperty(default=False)
     token = ndb.StringProperty()
     votes = ndb.KeyProperty(kind=Candidate, repeated=True)
-    email_count = ndb.IntegerProperty(default=0)
     create_time = ndb.DateTimeProperty(auto_now_add=True)
     vote_time = ndb.DateTimeProperty()
-    last_time_mail_sent = ndb.DateTimeProperty()
+    last_time_mail_queued = ndb.DateTimeProperty()
 
     @property
     def election_key(self):
         return self.key.parent()
+
+    @property
+    def mail_sent_recently(self):
+        if not self.last_time_mail_queued:
+            return False
+        else:
+            now = datetime.now()
+            time_since_last_send = now - self.last_time_mail_queued
+            min_resend_duration = timedelta(minutes=EMAIL_SEND_INTERVAL_MIN)
+            return time_since_last_send > min_resend_duration
 
 
 # API protorpc Messages

@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
 # voting app
 
+from datetime import datetime
+from dateutil import parser
 from flask import Flask, render_template, request
 from flask import abort, redirect
-from google.appengine.ext import ndb
 from google.appengine.api.taskqueue import Queue, Task
-from sendgrid import SendGridClient
-from sendgrid import Mail
-from models import VotingUser, Election
-from dateutil import parser
-from datetime import datetime
+from google.appengine.ext import ndb
 from itertools import groupby
-import uuid
+from models import VotingUser, Election
+from sendgrid import Mail
+from sendgrid import SendGridClient
 import logging
-
 import secrets
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +31,10 @@ sg = SendGridClient(secrets.SENDGRID_ID,
 def _get_or_create_voting_user(websafe_election_key, student_id):
     election_key = ndb.Key(urlsafe=websafe_election_key)
     if election_key is None:
-        raise Exception('Invalid election key')
+        raise ValueError('Invalid election key')
     if student_id != student_id.lower():
-        raise Exception('Student ID should be lower case')
+        raise ValueError('Student ID should be lower case')
+
     voting_user_key = ndb.Key(VotingUser, student_id, parent=election_key)
     voting_user = voting_user_key.get()
     if not voting_user:
@@ -51,20 +51,6 @@ def _get_user_from_token(token):
     """ Returns corresponding VotingUser """
     user = VotingUser.query(VotingUser.token == token).get()
     return user
-
-
-def _get_post_data(request):
-    """ returns post data both form/json format """
-    content_type = request.headers['Content-Type']
-    post_data = None
-    if 'application/x-www-form-urlencoded' in content_type:
-        post_data = request.form
-    elif 'application/json' in content_type:
-        post_data = request.get_json()
-    else:
-        logger.error('Unexpected Content-Type format: %s',
-                     content_type)
-    return post_data
 
 
 @ndb.transactional(xg=True, retries=3)
@@ -98,6 +84,7 @@ def angular_js_filter(s):
 @app.template_filter('datetime')
 def format_datetime(date_string):
     """ format ISO string into MM/DD/YYYY """
+    # TODO(Olala): handle timezone
     date = parser.parse(date_string)
     return date.strftime('%m/%d/%Y')
 
@@ -106,8 +93,6 @@ def _send_voting_email(voting_user):
     """ Create voting user and add voting email to mail-queue
     Input:
         voting_user: VotingUser, the user to be sent.
-    Output:
-        is_sent: bool, an email is sent successfully.
     """
     # Make email content with token-link
     election = voting_user.key.parent().get()
@@ -122,8 +107,9 @@ def _send_voting_email(voting_user):
         u"<h3>您好 {student_id}:</h3>"
         u"<p>感謝您參與{election_title} <br>"
         u"<h4><a href='{voting_link}'> 投票請由此進入 </a></h4> <br>"
-        u"若您未曾參與本次活動，請直接刪除本封信件 <br>"
-        u"若有任何疑問請來信至: {help_mail} <br></p>"
+        u"<p><b style=\"color: red\">此為您個人的投票連結，請勿轉寄或外流</b><br>"
+        u"若您未參與本次投票，請直接刪除本封信件 <br>"
+        u"任何疑問請來信至: {help_mail} <br></p>"
     ).format(
         student_id=voting_user.student_id,
         election_title=election.title,
@@ -144,7 +130,6 @@ def _send_voting_email(voting_user):
             'from': from_email,
         }
     ))
-    logger.info("Email queued: %s" % voting_user.student_id)
 
     voting_user.last_time_mail_queued = datetime.now()
     key = voting_user.put()
@@ -154,7 +139,6 @@ def _send_voting_email(voting_user):
 # -------- pages --------
 @app.route("/", methods=['GET'])
 def welcome():
-    logging.debug('DEBUG INFO!!!!')
     elections = [e.serialize() for e in Election.available_elections()]
     return render_template('welcome.html', elections=elections)
 
@@ -175,10 +159,12 @@ def voting_index(websafe_election_key):
             abort(500)
 
         lowercase_student_id = post_data.get('student_id').lower()
-        voting_user = _get_or_create_voting_user(
-                websafe_election_key, lowercase_student_id)
-
-        mail_sent_url = "/mail_sent/"
+        try:
+            voting_user = _get_or_create_voting_user(
+                    websafe_election_key, lowercase_student_id)
+        except ValueError as e:
+            logger.error('Error creating user: %s', e.message)
+            abort(500)
 
         if voting_user.voted:
             voted_url = "/voted/%s/" % websafe_election_key
@@ -193,7 +179,7 @@ def voting_index(websafe_election_key):
         else:
             logger.info('mail not really sent')
 
-        return redirect(mail_sent_url, 301)
+        return redirect('/mail_sent', 301)
 
 
 @app.route("/vote/<token>/", methods=['GET'])
@@ -206,7 +192,6 @@ def get_vote_page(token):
     if user is None:
         abort(404)
 
-    logger.error('user: %s, voted: %s', user, user.voted)
     if user.voted:
         voted_url = "/voted/%s/" % user.election_key.urlsafe()
         return redirect(voted_url, code=301)
@@ -215,7 +200,8 @@ def get_vote_page(token):
         election_dict = election.cached_deep_serialize()
         return render_template('vote.html',
                                election=election_dict,
-                               token=token)  # pass token for angular
+                               token=token,
+                               user=user)  # pass token for angular
 
 
 @app.route("/api/vote/<token>/", methods=['POST'])

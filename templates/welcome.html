@@ -31,7 +31,6 @@
       {% endfor %}
       {% if elections.length == 0 %}
         <h2>目前沒有投票進行中...</h2>
-
       {% endif %}
       </div>
     </div>
@@ -39,10 +38,5 @@
 {% endblock %}
 
 {% block extra_script %}
-<script src="/js/send_email_dialog.js"></script>
-<script type="text/javascript">
-$(function() {
-    sendEmailDialog.init();
-});
-</script>
+<!-- extra script here -->
 {% endblock %}

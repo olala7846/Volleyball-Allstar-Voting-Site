@@ -25,24 +25,25 @@
         </ul>
       </div>
 
-      <div class="card-block">
-        <div class="input-group" ng-class="inputGroupClass">
-          <input type="text" class="form-control" ng-model="studentId"
-                 ng-change="validate()" placeholder="例: B01234567"
-                 aria-describedby="basic-addon2">
-          <span class="input-group-addon">@ntu.edu.tw</span>
+      <form action="" method="post">
+        <div class="card-block">
+          <div class="input-group" ng-class="inputGroupClass">
+            <input type="text" name="student_id" class="form-control" ng-model="studentId"
+                   ng-change="validate()" placeholder="例: B01234567"
+                   aria-describedby="basic-addon2">
+            <span class="input-group-addon">@ntu.edu.tw</span>
+          </div>
+          <p class="text-muted pull-right">
+            投票時間: {{election.start_date|datetime}} ~ {{election.end_date|datetime}}
+          </p>
         </div>
-        <p class="text-muted pull-right">
-          投票時間: {{election.start_date|datetime}} ~ {{election.end_date|datetime}}
-        </p>
-      </div>
 
-      <div class="card-block">
-        <button class="btn btn-primary" ng-disabled="!valid"
-                ng-click="requestEmail()">
-          開始投票!
-        </button>
-      </div>
+        <div class="card-block">
+          <button type="submit" class="btn btn-primary" ng-disabled="!valid">
+            開始投票!
+          </button>
+        </div>
+      </form>
 
     </div>
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # voting app
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request
 from flask import abort, redirect
 from google.appengine.ext import ndb
 from google.appengine.api.taskqueue import Queue, Task
@@ -12,7 +12,6 @@ from dateutil import parser
 from datetime import datetime
 from itertools import groupby
 import uuid
-import math
 import logging
 
 import secrets
@@ -20,7 +19,7 @@ import secrets
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.config['DEBUG'] = False
+app.config['DEBUG'] = True
 
 # make a secure connection to SendGrid
 sg = SendGridClient(secrets.SENDGRID_ID,
@@ -104,7 +103,7 @@ def format_datetime(date_string):
 
 
 def _send_voting_email(voting_user):
-    """ Create voting user and send voting email with token to user
+    """ Create voting user and add voting email to mail-queue
     Input:
         voting_user: VotingUser, the user to be sent.
     Output:
@@ -113,15 +112,15 @@ def _send_voting_email(voting_user):
     # Make email content with token-link
     election = voting_user.key.parent().get()
     if not isinstance(election, Election):
-        msg = 'voting_user should have election as ndb ancestpr'
-        logger.error(msg)
+        msg = 'voting_user should have election as ndb ancestor'
         raise ValueError(msg)
+
     voting_link = "http://ntuvb-allstar.appspot.com/vote/"\
                   + voting_user.token
     from_email = "NTUManVolley@gmail.com"
     email_body = (
         u"<h3>您好 {student_id}:</h3>"
-        u"<p>感謝您參加{election_title} <br>"
+        u"<p>感謝您參與{election_title} <br>"
         u"<h4><a href='{voting_link}'> 投票請由此進入 </a></h4> <br>"
         u"若您未曾參與本次活動，請直接刪除本封信件 <br>"
         u"若有任何疑問請來信至: {help_mail} <br></p>"
@@ -147,98 +146,54 @@ def _send_voting_email(voting_user):
     ))
     logger.info("Email queued: %s" % voting_user.student_id)
 
-    voting_user.last_time_mail_sent = datetime.now()
-    voting_user.email_count += 1
+    voting_user.last_time_mail_queued = datetime.now()
     key = voting_user.put()
     key.get()  # for strong consistency
-    return True
-
-
-def _get_rest_wait_time(voting_user):
-    """ Create voting user and send voting email with token to user
-    Input:
-        voting_user: VotingUser, the user to be sent.
-    Output:
-        rest_wait_time: int, the rest wait time in minute.
-    """
-    if voting_user.email_count > 0:
-        time_since_create = (datetime.now() - voting_user.create_time)
-        minute_diff = int(time_since_create.total_seconds() / 60)
-        minutes_should_wait = 10 * math.pow(2, voting_user.email_count - 1)
-        if minute_diff < minutes_should_wait:
-            return minutes_should_wait - minute_diff
-    return 0
 
 
 # -------- pages --------
 @app.route("/", methods=['GET'])
 def welcome():
+    logging.debug('DEBUG INFO!!!!')
     elections = [e.serialize() for e in Election.available_elections()]
     return render_template('welcome.html', elections=elections)
 
 
-@app.route("/register/<websafe_election_key>/", methods=['GET'])
+@app.route("/register/<websafe_election_key>/", methods=['GET', 'POST'])
 def voting_index(websafe_election_key):
-    election_key = ndb.Key(urlsafe=websafe_election_key)
-    election = election_key.get()
-    if not election or not election.can_vote:
-        abort(404)
-    election_data = election.serialize()
-    return render_template('register.html', election=election_data)
+    if request.method == 'GET':
+        election_key = ndb.Key(urlsafe=websafe_election_key)
+        election = election_key.get()
+        if not election or not election.can_vote:
+            abort(404)
+        election_data = election.serialize()
+        return render_template('register.html', election=election_data)
 
+    elif request.method == 'POST':
+        post_data = request.form
+        if 'student_id' not in post_data:
+            abort(500)
 
-@app.route("/api/send_voting_email", methods=["POST"])
-def send_voting_email():
-    """ Create voting user and send voting email with token to user
-    Input:
-        student_id: string, student_id.
-        forced_send: bool, send voting email anyway.
-        election_key: target election urlsafe key
-    Output:
-        is_sent: bool, an email is sent in this request.
-        rest_wait_time: int, the rest wait time to send email in minute.
-        voted: bool, whether the user is voted.
-        error_message: str, be empty string if no error.
-    Error message:
-        returns 200 OK but with response.data
-        'already voted'
-        'send fail'
-    """
-    post_data = _get_post_data(request)
-    lowercase_student_id = post_data.get('student_id').lower()
-    forced_send = True if post_data.get('forced_send') == 'true' else False
-    websafe_election_key = post_data['election_key']
-    is_sent = False
-    error_message = ""
-    rest_wait_time = 0
+        lowercase_student_id = post_data.get('student_id').lower()
+        voting_user = _get_or_create_voting_user(
+                websafe_election_key, lowercase_student_id)
 
-    voting_user = _get_or_create_voting_user(
-            websafe_election_key, lowercase_student_id)
-    if voting_user.voted:
-        return 'already voted'
+        mail_sent_url = "/mail_sent/"
 
-    try:
-        # Only send voting email to existing user when forced_send is set
-        # and less than 3 emails are sent for the user.
-        rest_wait_time = _get_rest_wait_time(voting_user)
-        if voting_user.email_count == 0 or (
-                forced_send and rest_wait_time == 0):
-            is_sent = _send_voting_email(voting_user)
-    except Exception, e:
-        logger.error("Error in send_voting_email")
-        logger.error("student_id: %s, forced_send: %s" % (
-            lowercase_student_id, forced_send))
-        logger.error(e)
-        return 'send fail'
+        if voting_user.voted:
+            voted_url = "/voted/%s/" % websafe_election_key
+            return redirect(voted_url, 301)
+        elif not voting_user.mail_sent_recently:
+            # sent mail if not recently sent
+            try:
+                _send_voting_email(voting_user)
+            except Exception:
+                logger.error('Error sending mail: %s', lowercase_student_id)
+                return abort(500)
+        else:
+            logger.info('mail not really sent')
 
-    # TODO: use time instead of email count to constrain user.
-    result = {
-        "is_sent": is_sent,
-        "rest_wait_time": rest_wait_time,
-        "voted": voting_user.voted,
-        "error_message": error_message
-    }
-    return jsonify(**result)
+        return redirect(mail_sent_url, 301)
 
 
 @app.route("/vote/<token>/", methods=['GET'])
@@ -251,9 +206,10 @@ def get_vote_page(token):
     if user is None:
         abort(404)
 
+    logger.error('user: %s, voted: %s', user, user.voted)
     if user.voted:
         voted_url = "/voted/%s/" % user.election_key.urlsafe()
-        return redirect(voted_url, code=302)
+        return redirect(voted_url, code=301)
     else:
         election = user.election_key.get()
         election_dict = election.cached_deep_serialize()
@@ -337,6 +293,7 @@ def already_voted(websafe_election_key):
     return render_template('message.html', message=message, url=url)
 
 
+@app.errorhandler(500)
 @app.route("/error/", methods=['GET'])
 def error_page():
     message = u"發生錯誤，請稍後再試或聯絡工作人員"

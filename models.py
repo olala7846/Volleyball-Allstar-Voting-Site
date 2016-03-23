@@ -9,6 +9,9 @@ from google.appengine.ext import ndb
 from google.appengine.api import memcache
 from datetime import datetime, timedelta
 
+import logging
+logger = logging.getLogger(__name__)
+
 EMAIL_SEND_INTERVAL_MIN = 10
 
 
@@ -162,7 +165,7 @@ class VotingUser(ndb.Model):
             now = datetime.now()
             time_since_last_send = now - self.last_time_mail_queued
             min_resend_duration = timedelta(minutes=EMAIL_SEND_INTERVAL_MIN)
-            return time_since_last_send > min_resend_duration
+            return time_since_last_send < min_resend_duration
 
 
 # API protorpc Messages

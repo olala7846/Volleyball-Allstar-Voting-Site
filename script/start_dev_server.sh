@@ -4,4 +4,4 @@
 # the local database will be populated under DB_PATH
 
 DB_PATH="./db/allstar_datastore"
-dev_appserver.py --datastore_path=$DB_PATH .
+dev_appserver.py --log_level=debug --datastore_path=$DB_PATH .

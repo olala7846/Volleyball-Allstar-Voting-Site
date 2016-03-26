@@ -90,23 +90,6 @@ def _create_election(request):
     return election
 
 
-def _create_position(request):
-    # get and remove ancestor key
-    websafe_election_key = getattr(request, 'election_key')
-    election_key = ndb.Key(Election, websafe_election_key)
-    data = request_to_dict(request)
-    del data['election_key']
-    logger.error('populate with data %s', data)
-
-    # allocate position_id and position
-    position_id = ndb.Model.allocate_ids(size=1, parent=election_key)[0]
-    position_key = ndb.Key(Position, position_id, parent=election_key)
-    position = Position(key=position_key)
-    position.populate(**data)
-    position.put()
-    return position
-
-
 def _factory_election_data(websafe_election_key):
     """ Factory database with data from settings.py """
     # create or update election
@@ -126,10 +109,12 @@ def _factory_election_data(websafe_election_key):
         position = Position.query(ancestor=election_key).\
             filter(Position.name == position_name).get()
         if position is None:
+            logger.debug('creating new position entity')
             position_id = ndb.Model.allocate_ids(
                     size=1, parent=election_key)[0]
             position_key = ndb.Key(Position, position_id, parent=election_key)
             position = Position(key=position_key)
+
         position.populate(**pos_data)
         position_key = position.put()
 

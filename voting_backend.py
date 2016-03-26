@@ -101,7 +101,9 @@ def _factory_election_data(websafe_election_key):
     election.populate(**ELECTION_DATA)
     election_key = election.put()
 
-    for pos_data in POSITION_DATA:
+    for pos_data_orig in POSITION_DATA:
+        # avoid directly delete on setting objects
+        pos_data = pos_data_orig.copy()
         position_data = pos_data['data']
         del pos_data['data']
 

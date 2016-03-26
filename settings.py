@@ -14,7 +14,7 @@ ELECTION_DATA = {
     'description': u'2016台灣大學男子大排球明星賽',
     # (year, month, day, hour, min) in UTC
     'start_date': datetime(2016, 3, 28, 16, 0),
-    'end_date': datetime(2016, 4, 2, 16, 0)
+    'end_date': datetime(2016, 4, 1, 16, 0)
 }
 
 POSITION_DATA = [

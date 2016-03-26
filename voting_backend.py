@@ -162,7 +162,7 @@ def _update_election_status():
     election_iterator = qry.iter()
     cnt = 0
     for election in election_iterator:
-        now = datetime.now()
+        now = datetime.utcnow()
         if election.start_date < now and now < election.end_date:
             election.can_vote = True
             cnt = cnt + 1

@@ -36,7 +36,5 @@ body {
 }
 
 .card-shadow {
-  margin-top: 20px;
-  margin-bottom: 20px;
-  box-shadow: rgba(0, 0, 0, 0.6) 1px 5px 20px 0px;
+  box-shadow: rgba(0, 0, 0, 0.4) 3px 3px 8px 0px;
 }

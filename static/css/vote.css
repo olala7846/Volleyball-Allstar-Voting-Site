@@ -31,7 +31,8 @@
   background-color: red;
 }
 .candidate-card-selected {
-  background-color: #ffff99;
+  background-color: #ddd;
+  border-color: #888;
 }
 .position-title{
   margin-top: 10px;

@@ -28,8 +28,8 @@ function drawChart(){
     var view = new google.visualization.DataView(data);
     var chart = new google.visualization.BarChart(document.getElementById(element_id));
     var options = {
-      title: position.title,
-      height: candidates.length*40,
+      title: '前'+ position.num_elected + '名候選人當選',
+      height: candidates.length*38,
       bar: {groupWidth: '95%'},
       legend: { position: 'none'}
     };

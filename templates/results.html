@@ -10,9 +10,14 @@
 {% block content %}
 <div ng-app="resultsApp" ng-controller="ElectionResultsController" ng-init="init()">
   <div class="container" ng-cloak>
+    <div class="alert alert-info alert-for-delay" role="alert">
+      提醒您，票數<strong>每分鐘</strong>更新，稍有延遲請耐心等候
+    </div>
+
     <div class="row" ng-repeat="position in election.positions">
-      <div class="card card-shadow">
+      <div class="card card-shadow result-card">
         <div class="card-block">
+          <h4 class="card-title">{{'position.title'|aj}}</h4>
           <div id="{{'position.name'|aj}}">
             {% include 'initializing.html' %}
           </div>

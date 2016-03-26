@@ -2,9 +2,15 @@ Flask==0.10.1
 Jinja2==2.8
 MarkupSafe==0.23
 Werkzeug==0.11.4
+argparse==1.4.0
 itsdangerous==0.24
+linecache2==1.0.0
 python-dateutil==2.4.2
-six==1.10.0
+pytz==2016.3
 sendgrid==1.0.1
+six==1.10.0
+smtpapi==0.1.2
+traceback2==1.4.0
+unittest2==1.1.0
 wrapt==1.10.6
 wsgiref==0.1.2

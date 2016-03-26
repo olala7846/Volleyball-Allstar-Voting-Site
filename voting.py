@@ -14,6 +14,7 @@ from sendgrid import SendGridClient
 import logging
 import secrets
 import uuid
+import pytz
 
 logger = logging.getLogger(__name__)
 
@@ -83,10 +84,13 @@ def angular_js_filter(s):
 
 @app.template_filter('datetime')
 def format_datetime(date_string):
-    """ format ISO string into MM/DD/YYYY """
-    # TODO(Olala): handle timezone
-    date = parser.parse(date_string)
-    return date.strftime('%m/%d/%Y')
+    """ Formats no tzinfo datetime to Asia/Taipei date string """
+    UTC = pytz.utc
+    TAIPEI_TZ = pytz.timezone('Asia/Taipei')
+
+    no_tz_dt = parser.parse(date_string)
+    local_dt = no_tz_dt.replace(tzinfo=UTC).astimezone(TAIPEI_TZ)
+    return local_dt.strftime('%m/%d/%Y %H:%M')
 
 
 def _send_voting_email(voting_user):

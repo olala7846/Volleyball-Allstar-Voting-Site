@@ -9,12 +9,12 @@ from candidate_data.role_setter import ROLE_SETTER
 from candidate_data.role_middle import ROLE_MIDDLE
 
 ELECTION_DATA = {
-    'name': u'2016MAY',
+    'name': u'2016 allstar',
     'title': u'2016台大排球明星賽',
     'description': u'2016台灣大學男子大排球明星賽',
     # (year, month, day, hour, min) in UTC
     'start_date': datetime(2016, 3, 28, 16, 0),
-    'end_date': datetime(2016, 4, 1, 15, 59)
+    'end_date': datetime(2016, 4, 2, 16, 00)
 }
 
 POSITION_DATA = [

@@ -110,7 +110,6 @@ def _create_position(request):
 def _factory_election_data(websafe_election_key):
     """ Factory database with data from settings.py """
     # create or update election
-    election = None
     if websafe_election_key is not None:
         election_key = ndb.Key(urlsafe=websafe_election_key)
         election = election_key.get()
@@ -195,10 +194,8 @@ class VotingApi(remote.Service):
                       name='setupElection')
     @admin_only
     def setup_election(self, request):
-        """ Factory reset voting with data
-        Should create Election, Role, and import Candidate data
-
-        Though accecting ElectionForm, only websafe_key is required
+        """ Populates election data
+        Should create Election first, and privde election data
         """
         # get websafe_election_key if in request
         if not request.websafe_key:

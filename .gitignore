@@ -4,3 +4,4 @@ bower_components/
 dev_chrome/
 db/
 secrets.py
+plain_text_to_python.py

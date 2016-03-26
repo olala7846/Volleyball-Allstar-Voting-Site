@@ -1,21 +1,22 @@
 <div class="card" ng-class="cardClass()">
+
   <div class="card-img-top avatar-container">
-    <img class="avatar-img" src="http://placehold.it/350x250">
+    <img class="avatar-img" src="/img/320_180.png">
     <i class="fa fa-check" ng-show="candidate.selected" style="color: green"></i>
   </div>
+
   <div class="card-block">
     <h4 class="card-title">
       {{candidate.name}}
     </h4>
-    <h6 class="text-muted"> {{candidate.department}} </h6>
-    <div class="card-text candidate-description">
+    <h6 class="card-subtitle text-muted">
+      {{candidate.department}}
+    </h6>
+    <!-- no description for 2016 vote -->
+    <!--div class="card-text candidate-description">
       {{candidate.description}}
-    </div>
-  </div>
-  <div class="card-block">
-    <p class="text-muted" style="height: 1em;">
-      <span>{{voteStatus}}</span>
-    </p>
+    </div-->
+
     <button type="button" ng-class="btnClass()"
             ng-click="toggleCandidate()" ng-disabled="!canToggle()">
       {{btnTitle}}

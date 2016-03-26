@@ -7,9 +7,10 @@
 }
 .avatar-container {
   width: 100%;
-  height: 200px;
-  overflow: hidden;
+  padding-top: 56.25%;
   position: relative;
+  background-color: grey;
+  overflow: hidden;
 }
 .avatar-container > .fa-check {
   position: absolute;
@@ -19,7 +20,11 @@
 
 }
 .avatar-img {
-  display: block;
+  width: 100%;
+  height: 100%;
+  top: 0px;
+  left: 0px;
+  position: absolute;
   margin: auto;
 }
 .position-invalid {
@@ -34,4 +39,7 @@
 .card-submit {
   margin-top: 50px;
   margin-bottom: 100px;
+}
+.card-block button {
+  margin-top: 10px;
 }

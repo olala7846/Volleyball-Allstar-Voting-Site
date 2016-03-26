@@ -104,9 +104,9 @@
           });
           $scope.full = (totalVotes.length >= votesPerPerson);
           if($scope.full){
-            $scope.voteStatus = $scope.position.title+'已投好投滿';
+            $scope.voteStatus = '已投好投滿';
           }else{
-            $scope.voteStatus = $scope.position.title+'已投'+totalVotes.length+'/'+votesPerPerson;
+            $scope.voteStatus = '已投了'+totalVotes.length+'/'+votesPerPerson;
           }
 
         }, true);  // watch deep

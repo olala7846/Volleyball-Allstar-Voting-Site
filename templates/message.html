@@ -1,6 +1,6 @@
 {% extends "allstar.html" %}
 {% block morehead %}
-  <link rel="stylesheet" href="/css/welcome.css">
+  <link rel="stylesheet" href="/css/message.css">
 {% endblock %}
 
 {% block content %}
@@ -9,7 +9,7 @@
     <!-- votes -->
     <div class="row">
       <div class="col-xs-12">
-        <div class="jumbotron card-shadow">
+        <div class="jumbotron card-shadow message-card">
           <h1> {{message|safe}} </h1>
           {% if url %}
           <a href="{{url.href}}"><h4>{{url.title}}</h4></a>

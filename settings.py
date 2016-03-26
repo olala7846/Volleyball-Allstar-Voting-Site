@@ -44,8 +44,8 @@ POSITION_DATA = [
     },
     {
         'name': 'rightside',
-        'title': u'舉球對角',
-        'description': u'舉球對角',
+        'title': u'輔舉',
+        'description': u'輔舉',
         'votes_per_person': 1,
         'num_elected': 3,
         'data': ROLE_BACK,

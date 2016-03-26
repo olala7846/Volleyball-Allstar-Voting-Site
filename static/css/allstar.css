@@ -6,7 +6,7 @@ body {
   background: -moz-radial-gradient(circle, white, #ffcc00, #fff0b3);
   background: radial-gradient(circle, white, #ffcc00, #fff0b3);
   */
-  background-image: url("/img/allstar2016.jpg");
+  /* background-image: url("/img/allstar2016.jpg"); */
   background-position: center;
   background-repeat: no-repeat;
   -webkit-background-size: contain;

@@ -252,7 +252,7 @@ def see_results(websafe_election_key):
 
 @app.route("/mail_sent/", methods=['GET'])
 def mail_sent():
-    message = u"信件已寄出"
+    message = u"信件寄送中..."
     url = {
         'title': u'前往台大信箱',
         'href': 'http://mail.ntu.edu.tw/'

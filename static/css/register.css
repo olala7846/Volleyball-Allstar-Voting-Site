@@ -1,4 +1,7 @@
 /* register.css */
+body {
+  background-image: url("/img/allstar2016.jpg");
+}
 .register-panel {
   margin-top: 20px;
 }

@@ -63,17 +63,16 @@ def _do_vote(user_key, candidate_keys):
     # check user not voted
     user = user_key.get()  # check latest value
     if user.voted:
-        logger.error('_do_vote: %s already voted', user.student_id)
         raise Exception('Already voted')
-
-    user.votes = candidate_keys
-    user.voted = True
-    user.put()
 
     candidates = ndb.get_multi(candidate_keys)
     for candidate in candidates:
         candidate.num_votes = candidate.num_votes + 1
     ndb.put_multi(candidates)
+
+    user.votes = candidate_keys
+    user.voted = True
+    user.put()
 
 
 @app.template_filter('aj')
@@ -220,6 +219,7 @@ def vote_with_data(token):
     user = _get_user_from_token(token)
     post_data = request.get_json()
     candidate_ids = post_data['candidate_ids']
+    logger.error('receive %s vote', user);
     if user is None:
         return abort(403, 'Invalid token')
 
@@ -239,7 +239,7 @@ def vote_with_data(token):
         _do_vote(user.key, candidate_keys)
     except Exception:
         abort(403, 'Transaction fail')
-    return "success"
+    return 'success'
 
 
 @app.route("/results/<websafe_election_key>/", methods=['GET'])

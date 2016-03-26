@@ -10,7 +10,7 @@
       };
       $scope.sending_request = false;
 
-      function aggrecateVotes(){
+      function aggregateVotes(){
         var allVotes = [];
         var positions = $scope.election.positions;
         for(var i in positions){
@@ -29,20 +29,18 @@
 
       $scope.submitVotes = function(){
         $scope.sending_request = true;
-        var allVotes = aggrecateVotes();
+        var allVotes = aggregateVotes();
         if(allVotes){
           // submit vote request
           var config = {timeout: 10000};
           var ids = _.map(allVotes, function(candidate){
             return candidate.id;
           });
-          var param = {candidate_ids: ids};
+          var param = { candidate_ids: ids };
           var apiPath = '/api/vote/' + $scope.token + '/';
-          $http.post(apiPath, param, config).then(function(response){
-            console.log('response:', response);
+          $http.post(apiPath, param, config).then(function(){
             window.location.href = '/results/'+$scope.election.websafe_key;
-          }, function(response){
-            console.log(response);
+          }, function(){
             window.location.href = '/error/';
           });
         }

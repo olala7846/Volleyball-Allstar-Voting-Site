@@ -1,1 +1,9 @@
 /* results.css */
+.result-card {
+  margin-top: 20px;
+}
+.alert-for-delay {
+  margin-top: 20px;
+  margin-left: -15px;
+  margin-right: -15px;
+}

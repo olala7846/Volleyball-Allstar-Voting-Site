@@ -4,18 +4,22 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
-  {% if message %}
-  <blockquote class="blockquote row" style="margin-top: 20px;">
-    <h2> {{message}} </h2>
-  {% endif %}
-  {% if url %}
-    <a href="{{url.href}}"><h4>{{url.title}}</h4></a>
-  {% endif %}
-  </blockquote>
-</div>
+  <div class="container">
+
+    <!-- votes -->
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="jumbotron card-shadow message-card">
+          <h1> {{message|safe}} </h1>
+          {% if url %}
+          <a href="{{url.href}}"><h4>{{url.title}}</h4></a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block extra_script %}
-
+<!-- script here -->
 {% endblock %}

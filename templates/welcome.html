@@ -1,39 +1,36 @@
 {% extends "allstar.html" %}
 {% block morehead %}
-  <link rel="stylesheet" href="/css/all_votings.css">
   <link rel="stylesheet" href="/css/welcome.css">
 {% endblock %}
 
 {% block content %}
   <div class="container">
-    <!-- heading -->
-    <div class="jumbotron jumbotron-fluid">
-      <div class="container">
-        <h1 class="display-3">
-          第六屆<small>台大排球明星賽</small>
-        </h1>
-        <p class="lead text-right">SINCE 2011</p>
-      </div>
-    </div>
 
     <!-- votes -->
     <div class="row">
       {% for election in elections %}
       <div class="col-xs-12">
-        <div class="jumbotron">
+        <div class="jumbotron card-shadow card-election">
           <h1>{{ election.title }}</h1>
           <p>{{ election.description }}</p>
+          <p class="text-muted">投票時間: {{election.start_date|datetime}} ~ {{election.end_date|datetime}}</p>
           <p>
+            {% if election.can_vote %}
             <a class="btn btn-primary btn-lg" href="/register/{{election.websafe_key}}/">
               開始投票
             </a>
+            {% endif %}
+            {% if election.can_see_results %}
+            <a class="btn btn-primary btn-lg" href="/results/{{election.websafe_key}}/">
+              觀看結果
+            </a>
+            {% endif %}
           </p>
         </div>
       </div>
       {% endfor %}
       {% if elections.length == 0 %}
         <h2>目前沒有投票進行中...</h2>
-
       {% endif %}
       </div>
     </div>
@@ -41,10 +38,5 @@
 {% endblock %}
 
 {% block extra_script %}
-<script src="/js/send_email_dialog.js"></script>
-<script type="text/javascript">
-$(function() {
-    sendEmailDialog.init();
-});
-</script>
+<!-- extra script here -->
 {% endblock %}

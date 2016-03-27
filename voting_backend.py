@@ -18,6 +18,7 @@ from protorpc import message_types
 from protorpc import remote
 
 from google.appengine.ext import ndb
+from google.appengine.api import oauth
 from models import Election, Position, Candidate
 from models import ElectionForm, WebsafekeyForm
 from settings import ELECTION_DATA, POSITION_DATA
@@ -33,19 +34,19 @@ class SimpleMessage(messages.Message):
 
 
 # -------- Utilites --------
-def _is_admin(user):
-    if user is None:
-        return False
-    user_email = user.email()
-    return user_email in ADMIN_EMAILS
-
-
 @wrapt.decorator
 def admin_only(wrapped, instance, args, kwargs):
-    current_user = endpoints.get_current_user()
-    if not _is_admin(current_user):
+    endpoint_user = endpoints.get_current_user()
+    if endpoint_user is None:
         raise endpoints.UnauthorizedException('This API is admin only')
-    return wrapped(*args, **kwargs)
+
+    scope = 'https://www.googleapis.com/auth/userinfo.email'
+    is_admin = oauth.is_current_user_admin(scope)
+    # only execute when user is admin or running local server
+    if is_admin or endpoint_user.email() in ADMIN_EMAILS:
+        return wrapped(*args, **kwargs)
+    else:
+        raise endpoints.UnauthorizedException('This API is admin only')
 
 
 def remove_timezone(timestamp):
@@ -82,7 +83,6 @@ def request_to_dict(request):
 
 
 def _create_election(request):
-    # TODO(olala): require authentication
     data = request_to_dict(request)
     election = Election(**data)
     election.put()
@@ -90,27 +90,9 @@ def _create_election(request):
     return election
 
 
-def _create_position(request):
-    # get and remove ancestor key
-    websafe_election_key = getattr(request, 'election_key')
-    election_key = ndb.Key(Election, websafe_election_key)
-    data = request_to_dict(request)
-    del data['election_key']
-    logger.error('populate with data %s', data)
-
-    # allocate position_id and position
-    position_id = ndb.Model.allocate_ids(size=1, parent=election_key)[0]
-    position_key = ndb.Key(Position, position_id, parent=election_key)
-    position = Position(key=position_key)
-    position.populate(**data)
-    position.put()
-    return position
-
-
 def _factory_election_data(websafe_election_key):
     """ Factory database with data from settings.py """
     # create or update election
-    election = None
     if websafe_election_key is not None:
         election_key = ndb.Key(urlsafe=websafe_election_key)
         election = election_key.get()
@@ -119,7 +101,9 @@ def _factory_election_data(websafe_election_key):
     election.populate(**ELECTION_DATA)
     election_key = election.put()
 
-    for pos_data in POSITION_DATA:
+    for pos_data_orig in POSITION_DATA:
+        # avoid directly delete on setting objects
+        pos_data = pos_data_orig.copy()
         position_data = pos_data['data']
         del pos_data['data']
 
@@ -127,10 +111,12 @@ def _factory_election_data(websafe_election_key):
         position = Position.query(ancestor=election_key).\
             filter(Position.name == position_name).get()
         if position is None:
+            logger.debug('creating new position entity')
             position_id = ndb.Model.allocate_ids(
                     size=1, parent=election_key)[0]
             position_key = ndb.Key(Position, position_id, parent=election_key)
             position = Position(key=position_key)
+
         position.populate(**pos_data)
         position_key = position.put()
 
@@ -154,17 +140,22 @@ def _factory_election_data(websafe_election_key):
     return "update all data successfully"
 
 
-def _update_unended_elections():
-    """ iterate unstarted elections and update status """
-    qry = Election.query(Election.started == False)
+def _update_election_status():
+    """ iterate all elections and update can_vote status
+
+    return: number of votes running
+    """
+    qry = Election.query()
     election_iterator = qry.iter()
-    now = datetime.now()
     cnt = 0
-    for elect in election_iterator:
-        if elect.start_date < now:
-            elect.started = True
-            elect.put()
+    for election in election_iterator:
+        now = datetime.utcnow()
+        if election.start_date < now and now < election.end_date:
+            election.can_vote = True
             cnt = cnt + 1
+        else:
+            election.can_vote = False
+        election.put()
     return cnt
 
 
@@ -190,10 +181,8 @@ class VotingApi(remote.Service):
                       name='setupElection')
     @admin_only
     def setup_election(self, request):
-        """ Factory reset voting with data
-        Should create Election, Role, and import Candidate data
-
-        Though accecting ElectionForm, only websafe_key is required
+        """ Populates election data
+        Should create Election first, and privde election data
         """
         # get websafe_election_key if in request
         if not request.websafe_key:
@@ -204,10 +193,11 @@ class VotingApi(remote.Service):
     @endpoints.method(message_types.VoidMessage, SimpleMessage,
                       path='update_election_status', http_method='GET',
                       name='updateElectionStatus')
+    @admin_only
     def update_election_status(self, request):
-        """ Updates the election.started status """
-        cnt = _update_unended_elections()
-        msg = '%d elections started' % cnt
+        """ Updates the election.running status """
+        running_cnt = _update_election_status()
+        msg = '%d elections running' % running_cnt
         return SimpleMessage(msg=msg)
 
 

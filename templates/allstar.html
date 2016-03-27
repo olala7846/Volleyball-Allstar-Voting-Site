@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block head %}
+  <meta property="og:image" content="/img/allstar2016.jpg"/>
   <title>
     台大排球明星賽
   </title>
@@ -7,11 +8,30 @@
   <!-- Material Design fonts -->
   <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Roboto:300,400,500,700">
   <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="/css/allstar.css">
 
   {% block morehead %}{% endblock %}
 {% endblock %}
 
 {% block body %}
-  {% include "navbar.html" %}
-  {% block content %} {% endblock %}
+<!-- nav bar -->
+<nav class="navbar navbar-dark navbar-full bg-primary">
+  <div class="container">
+    <a class="navbar-brand" href="/"> 台大排球明星賽 </a>
+  </div>
+</nav>
+
+{% block content %} {% endblock %}
+
+<!-- footer -->
+<footer class="footer bg-primary">
+  <div class="container">
+    <a href="https://github.com/olala7846/ntuvb-allstar/graphs/contributors">
+      <p style="color: white; max-width: 100%; margin-bottom: 0px;">
+        <i class="fa fa-copyright"></i> Ins, Olala
+      </p>
+    </a>
+  </div>
+</footer>
+
 {% endblock %}

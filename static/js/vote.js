@@ -8,8 +8,9 @@
         $scope.election = $window.userdata.election;
         $scope.token = $window.userdata.token;
       };
+      $scope.sending_request = false;
 
-      function aggrecateVotes(){
+      function aggregateVotes(){
         var allVotes = [];
         var positions = $scope.election.positions;
         for(var i in positions){
@@ -27,19 +28,19 @@
       }
 
       $scope.submitVotes = function(){
-        var allVotes = aggrecateVotes();
+        $scope.sending_request = true;
+        var allVotes = aggregateVotes();
         if(allVotes){
           // submit vote request
           var config = {timeout: 10000};
           var ids = _.map(allVotes, function(candidate){
             return candidate.id;
           });
-          var param = {candidate_ids: ids};
+          var param = { candidate_ids: ids };
           var apiPath = '/api/vote/' + $scope.token + '/';
           $http.post(apiPath, param, config).then(function(){
             window.location.href = '/results/'+$scope.election.websafe_key;
-          }, function(err){
-            console.log(err);
+          }, function(){
             window.location.href = '/error/';
           });
         }
@@ -65,7 +66,7 @@
         });
         $scope.cardClass = function(){
           if($scope.candidate.selected){
-            return 'card-inverse card-success';
+            return 'candidate-card-selected';
           }
           return '';
         };
@@ -101,9 +102,9 @@
           });
           $scope.full = (totalVotes.length >= votesPerPerson);
           if($scope.full){
-            $scope.voteStatus = $scope.position.title+'已投好投滿';
+            $scope.voteStatus = '已投好投滿';
           }else{
-            $scope.voteStatus = $scope.position.title+'已投'+totalVotes.length+'/'+votesPerPerson;
+            $scope.voteStatus = '已投了'+totalVotes.length+'/'+votesPerPerson;
           }
 
         }, true);  // watch deep

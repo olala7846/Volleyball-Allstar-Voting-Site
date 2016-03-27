@@ -192,6 +192,16 @@ def get_vote_page(token):
     <token>: unique token stored in UserProfile
     """
     user = _get_user_from_token(token)
+
+    election = user.key.parent().get()
+    if not isinstance(election, Election):
+        logger.error('Got user without election as ancestor')
+        abort(500)
+
+    if not election.can_vote:
+        msg = u'投票已結束'
+        return render_template('message.html', message=msg)
+
     if user is None:
         abort(404)
 
@@ -219,7 +229,7 @@ def vote_with_data(token):
     user = _get_user_from_token(token)
     post_data = request.get_json()
     candidate_ids = post_data['candidate_ids']
-    logger.error('receive %s vote', user);
+    logger.info('receive %s vote', user)
     if user is None:
         return abort(403, 'Invalid token')
 

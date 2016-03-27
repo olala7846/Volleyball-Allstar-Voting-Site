@@ -9,7 +9,7 @@ angular.module('registerApp', [])
 
       $scope.validate = function() {
         var studentId = $scope.studentId;
-        var validPattern = new RegExp('[a-zA-z][0-9]{8}$');
+        var validPattern = new RegExp('[a-zA-Z][0-9]{2}[a-zA-Z0-9][0-9]{5}$');
         var match = studentId.match(validPattern);
         $scope.valid = false;
         $scope.inputGroupClass = 'has-danger';

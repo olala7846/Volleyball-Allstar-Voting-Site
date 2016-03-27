@@ -9,6 +9,7 @@ from google.appengine.ext import ndb
 from google.appengine.api import memcache
 from datetime import datetime, timedelta
 
+import hashlib
 import logging
 logger = logging.getLogger(__name__)
 
@@ -129,7 +130,7 @@ class Candidate(ndb.Model):
         """ convert Position object to python dictionary """
         data = {
             'id': self.key.urlsafe(),
-            'avatar': self.avatar,
+            'avatar_url': self.avatar_url,
             'department': self.department,
             'description': self.description,
             'name': self.name,
@@ -137,6 +138,17 @@ class Candidate(ndb.Model):
             'voting_index': self.voting_index,
         }
         return data
+
+    @property
+    def avatar_url(self):
+        """ returns self.avatar if set or hash self.name as avatar """
+        if self.avatar:
+            return self.avatar
+        else:
+            # hash self.name as image path
+            unicode_name = self.name.encode('utf-8')
+            hax_file_name = hashlib.md5(unicode_name).hexdigest()
+            return '/img/candidates/%s.jpg' % hax_file_name
 
 
 class VotingUser(ndb.Model):

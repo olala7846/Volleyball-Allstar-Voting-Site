@@ -197,7 +197,7 @@ class VotingApi(remote.Service):
     def update_election_status(self, request):
         """ Updates the election.running status """
         running_cnt = _update_election_status()
-        msg = '%d elections running' % running_cnt
+        msg = '%d elections running, now: %s' % (running_cnt, datetime.now())
         return SimpleMessage(msg=msg)
 
 

@@ -1,6 +1,6 @@
 cron:
 
 - description: result update and check election start/end
-  url: /_ah/api/v1/update_election_status
+  url: /_ah/api/voting/v1/update_election_status
   schedule: every 1 minutes
   timezone: Asia/Taipei

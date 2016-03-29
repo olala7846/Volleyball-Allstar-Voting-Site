@@ -9,12 +9,14 @@ angular.module('registerApp', [])
 
       $scope.validate = function() {
         var studentId = $scope.studentId;
+        /* disable check
         var studentPattern = new RegExp('[a-zA-Z][0-9]{2}[a-zA-Z0-9][0-9]{5}$');
         var teacherPattern = new RegExp('[a-zA-Z]+$');
         var match = studentId.match(studentPattern) || studentId.match(teacherPattern);
+        */
         $scope.valid = false;
         $scope.inputGroupClass = 'has-danger';
-        if(match != null && match[0] == studentId) {
+        if(studentId.length >= 3) {
           $scope.valid = true;
           $scope.inputGroupClass = 'has-success';
         } else if ($scope.studentId === '') {

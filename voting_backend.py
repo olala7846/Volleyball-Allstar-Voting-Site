@@ -10,6 +10,7 @@ create by olala7846@gmail.com
 import logging
 import dateutil.parser
 import wrapt
+import json
 from datetime import datetime
 
 import endpoints
@@ -19,7 +20,7 @@ from protorpc import remote
 
 from google.appengine.ext import ndb
 from google.appengine.api import oauth
-from models import Election, Position, Candidate
+from models import Election, Position, Candidate, VotingUser
 from models import ElectionForm, WebsafekeyForm
 from settings import ELECTION_DATA, POSITION_DATA
 
@@ -159,6 +160,51 @@ def _update_election_status():
     return cnt
 
 
+def _election_health_check(websafe_election_key):
+    """ Checks election vote integrity """
+    election_key = ndb.Key(urlsafe=websafe_election_key)
+    election = election_key.get()
+    if not election:
+        return "no such election %s" % websafe_election_key
+
+    logger.info('Starting health check, election: %s', election.name)
+    all_user_query = VotingUser.query(ancestor=election_key)
+
+    # aggregate votes
+    results = {}
+    for user in all_user_query.iter():
+        for vote_key in user.votes:
+            try:
+                results[vote_key] += 1
+            except KeyError:
+                results[vote_key] = 1
+
+    # save results as readable json string
+    readable_results = {}
+    for candidate_key, count in results.iteritems():
+        candidate = candidate_key.get()
+        readable_results[candidate.name] = {'calc_cnt': count}
+
+    # get vote count in database
+    candidate_query = Candidate.query(ancestor=election_key)
+    for candidate in candidate_query.iter():
+        name = candidate.name
+        count = candidate.num_votes
+        try:
+            readable_results[name]['db_cnt'] = count
+        except KeyError:
+            readable_results[name] = {'db_cnt': count, 'calc_cnt': 0}
+
+    diff_data = {}
+    for name, data in readable_results.iteritems():
+        if data['calc_cnt'] != data['db_cnt']:
+            diff_data[name] = data['db_cnt'] - data['calc_cnt']
+
+    message = {'raw_data': readable_results, 'diff_data': diff_data}
+    json_str = json.dumps(message)
+    return json_str
+
+
 # -------- API --------
 @endpoints.api(name='voting', version='v1',
                description='2016 allstar voting api')
@@ -199,6 +245,17 @@ class VotingApi(remote.Service):
         running_cnt = _update_election_status()
         msg = '%d elections running, now: %s' % (running_cnt, datetime.now())
         return SimpleMessage(msg=msg)
+
+    @endpoints.method(WebsafekeyForm, SimpleMessage,
+                      path='health_check', http_method='GET',
+                      name='healthCheck')
+    def health_check(self, request):
+        """ Checks votes integrity """
+        if not request.websafe_key:
+            raise endpoints.BadRequestException("require election_key")
+        msg = _election_health_check(request.websafe_key)
+        return SimpleMessage(msg=msg)
+
 
 
 api = endpoints.api_server([VotingApi])  # register API

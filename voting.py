@@ -73,6 +73,7 @@ def _do_vote(user_key, candidate_keys):
 
     user.votes = candidate_keys
     user.voted = True
+    user.vote_time = datetime.now()
     user.put()
 
 

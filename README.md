@@ -2,7 +2,7 @@
 GAE(Google App Engine) volleyball allstar game voting website
 
 * Langulage: Python
-* Web framework: 
+* Web framework:
  * Flask (Site FE & BE),
  * Google Cloud Endpoint (Admin API BE)
 * Database: Google Datastore (ndb)
@@ -19,9 +19,9 @@ GAE(Google App Engine) volleyball allstar game voting website
 1. Setup [GAE development environment][GAE_PYTHON]
 2. Clone this git projcet locally `git clone https://github.com/olala7846/ntuvb-allstar.git`
 3. Install python packages (with pypi & virtualenv)
-	
+
 	```
-	$ virtualenv venv 
+	$ virtualenv venv
 	$ source venv/bin/activate
 	$ pip install -r packages.txt
 	```
@@ -32,7 +32,7 @@ GAE(Google App Engine) volleyball allstar game voting website
 	$ bower install #Install packages under ./bower_compoments
 	```
 5. Launch local server and start coding!
-	
+
 	```
 	$ sh ./script/launch_dev_server.sh
 	$ sh./script/open_chrome  # for local cloud endpoint
@@ -46,8 +46,12 @@ GAE(Google App Engine) volleyball allstar game voting website
 	```
 	**WARNING!! NEVER COMMIT THIS FILE**
 
+7. Candidate avatars are keep under ./static/img/candidates/
+  currently the image name is the md5 hash of candidate name
+  see `models.candidates.avatar_url`
+
 ## Components
-1. Database schema: see `models.py` 	
+1. Database schema: see `models.py`
 2. Webserver: see `voting.py`
 3. Admin api server: see `voting_backend.py`
 4. Main queue: see `queue.yaml`

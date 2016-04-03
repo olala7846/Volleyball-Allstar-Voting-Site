@@ -35,6 +35,10 @@ handlers:
 - url: /.*
   script: voting.app
 
+- url: /cron/update_status
+  script: voting.app
+  login: admin
+
 libraries:
 - name: pycrypto
   version: latest

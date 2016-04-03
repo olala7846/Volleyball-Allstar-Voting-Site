@@ -142,6 +142,8 @@ class Candidate(ndb.Model):
     @property
     def avatar_url(self):
         """ returns self.avatar if set or hash self.name as avatar """
+        # TODO(Olala): name may conflict (between elections)
+        # use other hash method
         if self.avatar:
             return self.avatar
         else:

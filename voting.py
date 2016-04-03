@@ -11,6 +11,7 @@ from itertools import groupby
 from models import VotingUser, Election
 from sendgrid import Mail
 from sendgrid import SendGridClient
+from voting_backend import _update_election_status
 import logging
 import secrets
 import uuid
@@ -72,6 +73,7 @@ def _do_vote(user_key, candidate_keys):
 
     user.votes = candidate_keys
     user.voted = True
+    user.vote_time = datetime.now()
     user.put()
 
 
@@ -335,6 +337,13 @@ def send_mail():
     sg.send(message)
     logger.info("Email is sent to %s" % to_email)
     return ('', 204)
+
+
+@app.route("/cron/update_status", methods=['GET'])
+def update_status():
+    running_cnt = _update_election_status()
+    msg = '%d elections running, now: %s' % (running_cnt, datetime.now())
+    return msg
 
 
 if __name__ == "__main__":

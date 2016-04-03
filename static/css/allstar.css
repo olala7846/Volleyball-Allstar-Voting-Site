@@ -38,3 +38,6 @@ body {
 .card-shadow {
   box-shadow: rgba(0, 0, 0, 0.4) 3px 3px 8px 0px;
 }
+footer p a {
+  color: white;
+}

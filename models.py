@@ -1,9 +1,5 @@
-#!/user/bin/env python
-
-"""
-GAE Datastore models
-"""
-
+# -*- coding: utf-8 -*-
+# GAE datastore model
 from protorpc import messages
 from google.appengine.ext import ndb
 from google.appengine.api import memcache
@@ -18,9 +14,7 @@ EMAIL_SEND_INTERVAL_MIN = 10
 
 class Election(ndb.Model):
     """ Single Vote Event (e.g. 2016 Volleyball Allstar Game
-
-    name: used as readable id, should be unique
-        TODO(Olala): make it the /register and /results url
+    name: simple english name for developer
     title: human readable name
     can_see_results: should never vote or display results
     can_vote: can vote
@@ -36,8 +30,9 @@ class Election(ndb.Model):
     @classmethod
     def available_elections(cls):
         """ returns elections either can vote or can display retults"""
-        qry = Election.query(ndb.OR(Election.can_vote == True,
-                                    Election.can_see_results == True))
+        qry = Election.query(ndb.OR(
+            Election.can_vote == True,
+            Election.can_see_results == True))
         elections = qry.order(-cls.start_date).fetch(20)
         return elections
 
@@ -57,7 +52,10 @@ class Election(ndb.Model):
 
     @property
     def positions(self):
-        """ Returns Positions under the same entity group """
+        """Gets all Positions under the same entity group
+        normally 5 positions (Setter, Outside, Left, Middle
+        Right, Libero) under one election
+        """
         positions = Position.query(ancestor=self.key).fetch()
         return positions
 
@@ -79,12 +77,13 @@ class Election(ndb.Model):
         return data
 
 
+# 排球站位(舉球,主攻,欄中,輔舉,自由...)
 class Position(ndb.Model):
-    """ Single Vote Event (e.g. 2016 Volleyball Allstar Game
-
-    name is used for db query,
-    for human readable name please use title and description
+    """Represents a player specialization
+    name: english name for developer
+    title: readable chinese name for display
     """
+    # reference to list of Candidates
     candidate_keys = ndb.KeyProperty(repeated=True)
     description = ndb.StringProperty()
     name = ndb.StringProperty()
@@ -94,6 +93,7 @@ class Position(ndb.Model):
 
     @property
     def candidates(self):
+        """Returns all candidates running for this Position"""
         candidates = ndb.get_multi(self.candidate_keys)
         return sorted(candidates, key=lambda x: x.voting_index)
 
@@ -109,22 +109,23 @@ class Position(ndb.Model):
         return data
 
     def deep_serialize(self):
+        """Also serialize foreign key entities"""
         data = self.serialize()
         data['candidates'] = [c.serialize() for c in self.candidates]
         return data
 
 
+# 候選人
 class Candidate(ndb.Model):
-    """ Candidate in a single vote
-
+    """ Candidate in a single Election
     key: election_id.position_id.candidate_id as key
     """
-    avatar = ndb.StringProperty()
-    department = ndb.StringProperty()
-    description = ndb.TextProperty()
-    name = ndb.StringProperty()
-    num_votes = ndb.IntegerProperty(default=0)
-    voting_index = ndb.IntegerProperty()
+    avatar = ndb.StringProperty()  # 照片id
+    department = ndb.StringProperty()  # 系級
+    description = ndb.TextProperty()  # 球員描述
+    name = ndb.StringProperty()  # 姓名
+    num_votes = ndb.IntegerProperty(default=0)  # 目前票數
+    voting_index = ndb.IntegerProperty()  # 排序用index
 
     def serialize(self):
         """ convert Position object to python dictionary """
@@ -154,10 +155,14 @@ class Candidate(ndb.Model):
 
 
 class VotingUser(ndb.Model):
-    """ Representing a single user in a election
-        election_key: target election ndb key
-        token: generated uuid for user
-        votes: selected candidate keyes
+    """ Representing a single user (normally a student,
+    staff, professor ...) in a single Election. should be
+    under the same entity group of Election. view
+    utils.get_or_create_voting_user()
+
+    election_key: target election voted on
+    token: generated uuid for user
+    votes: voted candidate keyes
     """
     student_id = ndb.StringProperty()
     voted = ndb.BooleanProperty(default=False)
@@ -182,6 +187,7 @@ class VotingUser(ndb.Model):
             return time_since_last_send < min_resend_duration
 
 
+##### Google Cloud Endpoints #####
 # API protorpc Messages
 class ElectionForm(messages.Message):
     """ message to create/update Election model """

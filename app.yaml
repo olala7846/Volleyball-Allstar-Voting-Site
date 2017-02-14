@@ -26,9 +26,6 @@ handlers:
 - url: /tpl
   static_dir: static/tpl
 
-- url: /hello
-  script: helloworld.app
-
 - url: /_ah/spi/.*
   script: voting_backend.api
 

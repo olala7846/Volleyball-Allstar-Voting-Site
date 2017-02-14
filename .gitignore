@@ -5,3 +5,5 @@ dev_chrome/
 db/
 secrets.py
 plain_text_to_python.py
+.DS_Store
+node_modules/

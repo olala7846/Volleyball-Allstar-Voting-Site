@@ -1,20 +1,22 @@
 # -*- coding: utf-8 -*-
 # voting app
-
 from datetime import datetime
 from dateutil import parser
 from flask import Flask, render_template, request
 from flask import abort, redirect
-from google.appengine.api.taskqueue import Queue, Task
 from google.appengine.ext import ndb
 from itertools import groupby
-from models import VotingUser, Election
+from models import Election
 from sendgrid import Mail
 from sendgrid import SendGridClient
 from voting_backend import _update_election_status
+from utils import get_or_create_voting_user
+from utils import get_user_from_token
+from utils import send_voting_email
+from utils import do_vote
+
 import logging
 import secrets
-import uuid
 import pytz
 
 logger = logging.getLogger(__name__)
@@ -23,60 +25,11 @@ app = Flask(__name__)
 app.config['DEBUG'] = True
 
 # make a secure connection to SendGrid
-sg = SendGridClient(secrets.SENDGRID_ID,
-                    secrets.SENDGRID_PASSWORD,
-                    secure=True)
+sg = SendGridClient(
+    secrets.SENDGRID_ID, secrets.SENDGRID_PASSWORD, secure=True)
 
 
-# -------- utils --------
-@ndb.transactional(retries=3)
-def _get_or_create_voting_user(websafe_election_key, student_id):
-    election_key = ndb.Key(urlsafe=websafe_election_key)
-    if election_key is None:
-        raise ValueError('Invalid election key')
-    if student_id != student_id.lower():
-        raise ValueError('Student ID should be lower case')
-
-    voting_user_key = ndb.Key(VotingUser, student_id, parent=election_key)
-    voting_user = voting_user_key.get()
-    if not voting_user:
-        token = str(uuid.uuid4().hex)
-        voting_user = VotingUser(id=student_id,
-                                 student_id=student_id,
-                                 parent=election_key,
-                                 token=token)
-        voting_user_key = voting_user.put()
-    return voting_user
-
-
-def _get_user_from_token(token):
-    """ Returns corresponding VotingUser """
-    user = VotingUser.query(VotingUser.token == token).get()
-    return user
-
-
-@ndb.transactional(xg=True, retries=3)
-def _do_vote(user_key, candidate_keys):
-    """ Save vote to database after integrity check
-    user_key: VotingUser ndb key
-    candidate_yes: list of Candidate ndb key
-    """
-    # check user not voted
-    user = user_key.get()  # check latest value
-    if user.voted:
-        raise Exception('Already voted')
-
-    candidates = ndb.get_multi(candidate_keys)
-    for candidate in candidates:
-        candidate.num_votes = candidate.num_votes + 1
-    ndb.put_multi(candidates)
-
-    user.votes = candidate_keys
-    user.voted = True
-    user.vote_time = datetime.now()
-    user.put()
-
-
+# Define template filters
 @app.template_filter('aj')
 def angular_js_filter(s):
     """ example: {{'angular expressioins'|aj}} """
@@ -94,58 +47,12 @@ def format_datetime(date_string):
     return local_dt.strftime('%m/%d/%Y %H:%M')
 
 
-def _send_voting_email(voting_user):
-    """ Create voting user and add voting email to mail-queue
-    Input:
-        voting_user: VotingUser, the user to be sent.
-    """
-    # Make email content with token-link
-    election = voting_user.key.parent().get()
-    if not isinstance(election, Election):
-        msg = 'voting_user should have election as ndb ancestor'
-        raise ValueError(msg)
-
-    voting_link = "http://ntuvb-allstar.appspot.com/vote/"\
-                  + voting_user.token
-    from_email = "NTUManVolley@gmail.com"
-    email_body = (
-        u"<h3>您好 {student_id}:</h3>"
-        u"<p>感謝您參與{election_title} <br>"
-        u"<h4><a href='{voting_link}'> 投票請由此進入 </a></h4> <br>"
-        u"<p><b style=\"color: red\">此為您個人的投票連結，請勿轉寄或外流</b><br>"
-        u"若您未參與本次投票，請直接刪除本封信件 <br>"
-        u"任何疑問請來信至: {help_mail} <br></p>"
-    ).format(
-        student_id=voting_user.student_id,
-        election_title=election.title,
-        voting_link=voting_link,
-        help_mail=from_email)
-    text_body = u"投票請進: %s" % voting_link
-    email_subject = election.title+u"投票認證信"
-    to_email = voting_user.student_id+"@ntu.edu.tw"
-
-    queue = Queue('mail-queue')
-    queue.add(Task(
-        url='/queue/mail',
-        params={
-            'subject': email_subject,
-            'body': email_body,
-            'text_body': text_body,
-            'to': to_email,
-            'from': from_email,
-        }
-    ))
-
-    voting_user.last_time_mail_queued = datetime.now()
-    key = voting_user.put()
-    key.get()  # for strong consistency
-
-
 # -------- pages --------
 @app.route("/", methods=['GET'])
-def welcome():
+def landing_page():
+    """Find all available elections"""
     elections = [e.serialize() for e in Election.available_elections()]
-    return render_template('welcome.html', elections=elections)
+    return render_template('landing.html', elections=elections)
 
 
 @app.route("/register/<websafe_election_key>/", methods=['GET', 'POST'])
@@ -153,7 +60,7 @@ def voting_index(websafe_election_key):
     if request.method == 'GET':
         election_key = ndb.Key(urlsafe=websafe_election_key)
         election = election_key.get()
-        if not election or not election.can_vote:
+        if not election or not election.running:
             abort(404)
         election_data = election.serialize()
         return render_template('register.html', election=election_data)
@@ -165,7 +72,7 @@ def voting_index(websafe_election_key):
 
         lowercase_student_id = post_data.get('student_id').lower()
         try:
-            voting_user = _get_or_create_voting_user(
+            voting_user = get_or_create_voting_user(
                     websafe_election_key, lowercase_student_id)
         except ValueError as e:
             logger.error('Error creating user: %s', e.message)
@@ -177,7 +84,7 @@ def voting_index(websafe_election_key):
         elif not voting_user.mail_sent_recently:
             # sent mail if not recently sent
             try:
-                _send_voting_email(voting_user)
+                send_voting_email(voting_user)
             except Exception:
                 logger.error('Error sending mail: %s', lowercase_student_id)
                 return abort(500)
@@ -193,7 +100,7 @@ def get_vote_page(token):
 
     <token>: unique token stored in UserProfile
     """
-    user = _get_user_from_token(token)
+    user = get_user_from_token(token)
 
     election = user.key.parent().get()
     if not isinstance(election, Election):
@@ -228,7 +135,7 @@ def vote_with_data(token):
     candidate_ids: list of datastore candidate keys
         in urlsafe format
     """
-    user = _get_user_from_token(token)
+    user = get_user_from_token(token)
     post_data = request.get_json()
     candidate_ids = post_data['candidate_ids']
     logger.info('receive %s vote', user)
@@ -248,7 +155,7 @@ def vote_with_data(token):
             return abort(403, 'Invalid votes')
 
     try:
-        _do_vote(user.key, candidate_keys)
+        do_vote(user.key, candidate_keys)
     except Exception:
         abort(403, 'Transaction fail')
     return 'success'

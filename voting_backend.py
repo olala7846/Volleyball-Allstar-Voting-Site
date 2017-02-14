@@ -24,9 +24,8 @@ from models import Election, Position, Candidate, VotingUser
 from models import ElectionForm, WebsafekeyForm
 from settings import ELECTION_DATA, POSITION_DATA
 
+DEBUG = False
 logger = logging.getLogger(__name__)
-
-ADMIN_EMAILS = ["olala7846@gmail.com", "ins.huang@gmail.com"]
 
 
 class SimpleMessage(messages.Message):
@@ -44,7 +43,7 @@ def admin_only(wrapped, instance, args, kwargs):
     scope = 'https://www.googleapis.com/auth/userinfo.email'
     is_admin = oauth.is_current_user_admin(scope)
     # only execute when user is admin or running local server
-    if is_admin or endpoint_user.email() in ADMIN_EMAILS:
+    if DEBUG or is_admin:
         return wrapped(*args, **kwargs)
     else:
         raise endpoints.UnauthorizedException('This API is admin only')
@@ -206,13 +205,14 @@ def _election_health_check(websafe_election_key):
 
 
 # -------- API --------
-@endpoints.api(name='voting', version='v1',
-               description='2016 allstar voting api')
+@endpoints.api(
+    name='voting', version='v1', description='2016 allstar voting api')
 class VotingApi(remote.Service):
     """ allstar voting api """
 
-    @endpoints.method(ElectionForm, ElectionForm, path='create_election',
-                      http_method='POST', name='createElection')
+    @endpoints.method(
+        ElectionForm, ElectionForm, path='create_election',
+        http_method='POST', name='createElection')
     @admin_only
     def create_election(self, request):
         """ Creates new Election
@@ -232,7 +232,7 @@ class VotingApi(remote.Service):
         """
         # get websafe_election_key if in request
         if not request.websafe_key:
-            raise endpoints.BadRequestException("require electino key")
+            raise endpoints.BadRequestException("require election key")
         result = _factory_election_data(request.websafe_key)
         return SimpleMessage(msg=result)
 

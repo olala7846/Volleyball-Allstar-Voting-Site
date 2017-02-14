@@ -50,6 +50,12 @@ GAE(Google App Engine) volleyball allstar game voting website
   currently the image name is the md5 hash of candidate name
   see `models.candidates.avatar_url`
 
+## Voting backend
+
+go to `http://my.host/_ah/api/explorer`
+first create a election with `voting.createElection` after that
+see `voting.setupElection`
+
 ## Components
 1. Database schema: see `models.py`
 2. Webserver: see `voting.py`

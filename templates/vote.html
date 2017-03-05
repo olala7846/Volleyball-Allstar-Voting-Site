@@ -19,17 +19,19 @@
 
     <!-- submit button -->
     <div class="row" ng-cloak>
-      <div class="col-xs-12">
-        <div class="card card-block card-submit">
-          <h3>{{user.student_id}}您好</h3>
-          <div class="alert alert-warning" role="alert">
-            <strong>請注意!</strong>一旦完成投票便無法修改結果
-          </div>
+      <div class="col-xs-12 col-xl-12">
+        <div class="card card-submit">
+          <div class="card-block">
+            <h3 class="card-title">{{user.student_id}}您好</h3>
+            <div class="alert alert-warning" role="alert">
+              <strong>請注意!</strong>一旦完成投票便無法修改結果
+            </div>
 
-          <button type="button" class="btn btn-primary btn-lg btn-block"
-                  ng-click="submitVotes()" ng-disabled="sending_request">
-            投下神聖的一票
-          </button>
+            <button type="button" class="btn btn-primary btn-lg btn-block"
+                    ng-click="submitVotes()" ng-disabled="sending_request">
+              投下神聖的一票
+            </button>
+          </div>
         </div>
       </div>
     </div>

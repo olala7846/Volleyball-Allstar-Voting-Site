@@ -56,7 +56,7 @@ def landing_page():
 
 
 @app.route("/register/<websafe_election_key>/", methods=['GET', 'POST'])
-def voting_index(websafe_election_key):
+def register_vote(websafe_election_key):
     if request.method == 'GET':
         election_key = ndb.Key(urlsafe=websafe_election_key)
         election = election_key.get()

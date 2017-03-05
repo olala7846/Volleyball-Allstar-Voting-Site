@@ -20,9 +20,8 @@ class Election(ndb.Model):
     can_vote: can vote
     """
     description = ndb.StringProperty()
-    start_date = ndb.DateTimeProperty()
-    end_date = ndb.DateTimeProperty()
-    name = ndb.StringProperty()
+    start_date = ndb.DateTimeProperty(auto_now_add=True)
+    end_date = ndb.DateTimeProperty(auto_now_add=True)
     title = ndb.StringProperty()
     can_vote = ndb.BooleanProperty(default=True)
     can_see_results = ndb.BooleanProperty(default=True)
@@ -42,7 +41,6 @@ class Election(ndb.Model):
             'description': self.description,
             'end_date': self.end_date.isoformat(),
             'start_date': self.start_date.isoformat(),
-            'name': self.name,
             'title': self.title,
             'websafe_key': self.key.urlsafe(),
             'can_vote': self.can_vote,
@@ -191,7 +189,7 @@ class VotingUser(ndb.Model):
 # API protorpc Messages
 class ElectionForm(messages.Message):
     """ message to create/update Election model """
-    name = messages.StringField(1)
+    title = messages.StringField(1)
     description = messages.StringField(2)
     start_date = messages.StringField(3, required=True)
     end_date = messages.StringField(4, required=True)

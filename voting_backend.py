@@ -24,7 +24,7 @@ from models import Election, Position, Candidate, VotingUser
 from models import ElectionForm, WebsafekeyForm
 from settings import ELECTION_DATA, POSITION_DATA
 
-DEBUG = False
+DEBUG = True
 logger = logging.getLogger(__name__)
 
 
@@ -166,7 +166,6 @@ def _election_health_check(websafe_election_key):
     if not election:
         return "no such election %s" % websafe_election_key
 
-    logger.info('Starting health check, election: %s', election.name)
     all_user_query = VotingUser.query(ancestor=election_key)
 
     # aggregate votes
@@ -255,7 +254,6 @@ class VotingApi(remote.Service):
             raise endpoints.BadRequestException("require election_key")
         msg = _election_health_check(request.websafe_key)
         return SimpleMessage(msg=msg)
-
 
 
 api = endpoints.api_server([VotingApi])  # register API

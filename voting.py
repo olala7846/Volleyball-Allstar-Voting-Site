@@ -60,7 +60,7 @@ def voting_index(websafe_election_key):
     if request.method == 'GET':
         election_key = ndb.Key(urlsafe=websafe_election_key)
         election = election_key.get()
-        if not election or not election.running:
+        if not election or not election.can_vote:
             abort(404)
         election_data = election.serialize()
         return render_template('register.html', election=election_data)

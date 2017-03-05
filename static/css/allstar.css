@@ -41,3 +41,6 @@ body {
 footer p a {
   color: white;
 }
+a.navbar-brand {
+  color: white;
+}

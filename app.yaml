@@ -1,7 +1,5 @@
 # Created by olala7486@gmail.com
 
-application: ntuvb-allstar
-version: 1
 runtime: python27
 api_version: 1
 threadsafe: true

@@ -21,7 +21,7 @@ import pytz
 
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='./templates')
 app.config['DEBUG'] = True
 
 # make a secure connection to SendGrid

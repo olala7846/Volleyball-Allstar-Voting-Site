@@ -4,7 +4,7 @@ Example:
 ``` python
 import hashlib
 
-img_name = hashlib.md5('巫仰哲').hexdigest()
+img_name = hashlib.md5(‘2017巫仰哲').hexdigest()
 # image_name == 'd4361d848be50549a274d235b0774acf'
 ```
 

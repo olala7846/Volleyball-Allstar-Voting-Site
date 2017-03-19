@@ -18,6 +18,7 @@ class Election(ndb.Model):
     title: human readable name
     can_see_results: should never vote or display results
     can_vote: can vote
+    should_display: should display on landing page
     """
     description = ndb.StringProperty()
     start_date = ndb.DateTimeProperty(auto_now_add=True)
@@ -25,13 +26,12 @@ class Election(ndb.Model):
     title = ndb.StringProperty()
     can_vote = ndb.BooleanProperty(default=True)
     can_see_results = ndb.BooleanProperty(default=True)
+    should_display = ndb.BooleanProperty(default=False)
 
     @classmethod
     def available_elections(cls):
         """ returns elections either can vote or can display retults"""
-        qry = Election.query(ndb.OR(
-            Election.can_vote == True,
-            Election.can_see_results == True))
+        qry = Election.query(Election.should_display == True)
         elections = qry.order(-cls.start_date).fetch(20)
         return elections
 

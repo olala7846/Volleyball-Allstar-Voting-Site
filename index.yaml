@@ -21,3 +21,9 @@ indexes:
   - name: can_vote
   - name: start_date
     direction: desc
+
+- kind: Election
+  properties:
+  - name: should_display
+  - name: start_date
+    direction: desc

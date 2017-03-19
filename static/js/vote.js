@@ -102,7 +102,7 @@
           });
           $scope.full = (totalVotes.length >= votesPerPerson);
           if($scope.full){
-            $scope.voteStatus = '已投好投滿';
+            $scope.voteStatus = '沒票了(〒︿〒)';
           }else{
             $scope.voteStatus = '已投了'+totalVotes.length+'/'+votesPerPerson;
           }

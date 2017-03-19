@@ -153,6 +153,7 @@ def _update_election_status():
     for election in election_iterator:
         now = datetime.utcnow()
         if election.start_date <= now and now <= election.end_date:
+            election.can_see_results = True
             election.can_vote = True
             cnt = cnt + 1
         else:

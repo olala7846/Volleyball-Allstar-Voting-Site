@@ -10,10 +10,10 @@ from candidate_data.role_middle import ROLE_MIDDLE
 
 ELECTION_DATA = {
     'title': u'2017台大排球明星賽',
-    'description': u'2017台灣大學男子大排球明星賽',
+    'description': u'第七屆台大男子排球明星賽',
     # (year, month, day, hour, min) in UTC
-    'start_date': datetime(2017, 3, 7, 0, 0),
-    'end_date': datetime(2017, 3, 9, 0, 0)
+    'start_date': datetime(2017, 3, 19, 16, 0),
+    'end_date': datetime(2017, 3, 25, 14, 30)
 }
 
 POSITION_DATA = [
@@ -22,7 +22,7 @@ POSITION_DATA = [
         'title': u'舉球員',
         'description': u'舉球員',
         'votes_per_person': 1,
-        'num_elected': 3,
+        'num_elected': 4,
         'data': ROLE_SETTER,
     },
     {
@@ -30,7 +30,7 @@ POSITION_DATA = [
         'title': u'主攻手',
         'description': u'主攻手',
         'votes_per_person': 3,
-        'num_elected': 9,
+        'num_elected': 8,
         'data': ROLE_MAIN,
     },
     {
@@ -38,7 +38,7 @@ POSITION_DATA = [
         'title': u'攔中手',
         'description': u'攔中手',
         'votes_per_person': 3,
-        'num_elected': 9,
+        'num_elected': 6,
         'data': ROLE_MIDDLE,
     },
     {
@@ -46,7 +46,7 @@ POSITION_DATA = [
         'title': u'輔舉',
         'description': u'輔舉',
         'votes_per_person': 1,
-        'num_elected': 3,
+        'num_elected': 4,
         'data': ROLE_BACK,
     },
     {
@@ -54,7 +54,7 @@ POSITION_DATA = [
         'title': u'自由球員',
         'description': u'自由球員',
         'votes_per_person': 1,
-        'num_elected': 3,
+        'num_elected': 2,
         'data': ROLE_LIBERO,
     },
 ]

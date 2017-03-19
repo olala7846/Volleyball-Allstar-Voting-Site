@@ -24,7 +24,7 @@ from models import Election, Position, Candidate, VotingUser
 from models import ElectionForm, WebsafekeyForm
 from settings import ELECTION_DATA, POSITION_DATA
 
-DEBUG = False
+DEBUG = True
 logger = logging.getLogger(__name__)
 
 

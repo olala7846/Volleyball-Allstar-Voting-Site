@@ -141,13 +141,12 @@ class Candidate(ndb.Model):
     @property
     def avatar_url(self):
         """ returns self.avatar if set or hash self.name as avatar """
-        # TODO(Olala): name may conflict (between elections)
-        # use other hash method
         if self.avatar:
             return self.avatar
         else:
             # hash self.name as image path
-            unicode_name = self.name.encode('utf-8')
+            name_token = self.description + self.name
+            unicode_name = name_token.encode('utf-8')
             hax_file_name = hashlib.md5(unicode_name).hexdigest()
             return '/img/candidates/%s.jpg' % hax_file_name
 

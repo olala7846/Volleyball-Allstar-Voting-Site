@@ -101,6 +101,8 @@ def get_vote_page(token):
     <token>: unique token stored in UserProfile
     """
     user = get_user_from_token(token)
+    if user is None:
+        abort(404)
 
     election = user.key.parent().get()
     if not isinstance(election, Election):
@@ -110,9 +112,6 @@ def get_vote_page(token):
     if not election.can_vote:
         msg = u'投票已結束'
         return render_template('message.html', message=msg)
-
-    if user is None:
-        abort(404)
 
     if user.voted:
         voted_url = "/voted/%s/" % user.election_key.urlsafe()

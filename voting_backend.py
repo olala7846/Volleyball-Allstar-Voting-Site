@@ -54,7 +54,9 @@ def remove_timezone(timestamp):
     see http://stackoverflow.com/questions/12763938/
     """
     # date not tested
-    timestamp = timestamp.replace(tzinfo=None) - timestamp.utcoffset()
+    if timestamp.tzinfo:
+        timestamp = timestamp.replace(tzinfo=None) - timestamp.utcoffset()
+
     return timestamp
 
 

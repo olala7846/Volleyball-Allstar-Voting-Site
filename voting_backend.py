@@ -162,6 +162,11 @@ def _update_election_status():
     return cnt
 
 
+def _clean_id(student_id):
+    clean_id = student_id.replace(" ", "")
+    return clean_id
+
+
 def _election_health_check(websafe_election_key):
     """ Checks election vote integrity """
     election_key = ndb.Key(urlsafe=websafe_election_key)
@@ -172,15 +177,14 @@ def _election_health_check(websafe_election_key):
     all_user_query = VotingUser.query(ancestor=election_key)
 
     # aggregate votes
-    dirty = 0
+    dirty = []
     results = {}
     for user in all_user_query.iter():
         student_id = user.student_id
-        student_id_len = len(student_id)
-        student_id = student_id.replace(" ", "")
-        clean_student_id_len = len(student_id)
-        if clean_student_id_len != student_id_len:
-            dirty = dirty + 1
+        clean_student_id = _clean_id(student_id)
+        if student_id != clean_student_id:
+            dirty.append(student_id)
+            continue
 
         for vote_key in user.votes:
             try:

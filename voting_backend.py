@@ -172,8 +172,16 @@ def _election_health_check(websafe_election_key):
     all_user_query = VotingUser.query(ancestor=election_key)
 
     # aggregate votes
+    dirty = 0
     results = {}
     for user in all_user_query.iter():
+        student_id = user.student_id
+        student_id_len = len(student_id)
+        student_id = student_id.replace(" ", "")
+        clean_student_id_len = len(student_id)
+        if clean_student_id_len != student_id_len:
+            dirty = dirty + 1
+
         for vote_key in user.votes:
             try:
                 results[vote_key] += 1
@@ -201,7 +209,11 @@ def _election_health_check(websafe_election_key):
         if data['calc_cnt'] != data['db_cnt']:
             diff_data[name] = data['db_cnt'] - data['calc_cnt']
 
-    message = {'raw_data': readable_results, 'diff_data': diff_data}
+    message = {
+        'raw_data': readable_results,
+        'diff_data': diff_data,
+        'dirty': dirty
+    }
     json_str = json.dumps(message)
     return json_str
 

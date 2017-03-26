@@ -4,7 +4,6 @@
 voting_backend.py -- backgend (apiserver + tasks) for voting app
 
 create by olala7846@gmail.com
-
 """
 
 import logging

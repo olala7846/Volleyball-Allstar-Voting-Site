@@ -13,6 +13,7 @@ from voting_backend import _update_election_status
 from utils import get_or_create_voting_user
 from utils import get_user_from_token
 from utils import send_voting_email
+from utils import sanitize_email_local_part
 from utils import do_vote
 
 import logging
@@ -70,10 +71,11 @@ def register_vote(websafe_election_key):
         if 'student_id' not in post_data:
             abort(500)
 
-        lowercase_student_id = post_data.get('student_id').lower()
+        raw_sid = post_data.get('student_id').lower()
+        sanitized_sid = sanitize_email_local_part(raw_sid)
         try:
             voting_user = get_or_create_voting_user(
-                    websafe_election_key, lowercase_student_id)
+                websafe_election_key, sanitized_sid)
         except ValueError as e:
             logger.error('Error creating user: %s', e.message)
             abort(500)
@@ -86,7 +88,7 @@ def register_vote(websafe_election_key):
             try:
                 send_voting_email(voting_user)
             except Exception:
-                logger.error('Error sending mail: %s', lowercase_student_id)
+                logger.error('Error sending mail: %s', sanitized_sid)
                 return abort(500)
         else:
             logger.info('mail not really sent')

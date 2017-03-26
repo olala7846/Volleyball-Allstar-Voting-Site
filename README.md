@@ -14,6 +14,7 @@ GAE(Google App Engine) volleyball allstar game voting website
 1. Learn Python, [GAE][GAE]
 2. Learn Git, Pypi, [virtualenv][virtualenv], [npm][npm], [Bower][Bower]
 3. Learn, [AngularJS][AngularJS], [Bootstrap][Bootstrap], [Flask][Flask]
+4. Learn pytest
 
 ## Setup
 1. Setup [GAE development environment][GAE_PYTHON]
@@ -55,6 +56,10 @@ GAE(Google App Engine) volleyball allstar game voting website
 go to `http://my.host/_ah/api/explorer`
 first create a election with `voting.createElection` after that
 see `voting.setupElection`
+
+## Unit tests
+run `py.test` to start running unit tests
+new test files with the naming style `test_modulename.py` will automatically be descovered by pytest
 
 ## Components
 1. Database schema: see `models.py`

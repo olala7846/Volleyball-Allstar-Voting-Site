@@ -107,8 +107,9 @@ def send_voting_email(voting_user):
 def sanitize_email_local_part(raw_local_part):
     """We user the local-part of student/staff ntu email as user id
     though it was not in RFC 5322 but NTU webmail treats some local-parts
-    as same email-address (e.g. b96902004, B96902004, b96.b902004 ...ect)
+    as same email-address (e.g. b96902004, B96902004, b96.902004 ...ect)
     so we need to sanitize it before using it as student id"""
     clean_id = raw_local_part.lower()
     clean_id = re.sub(r'\s', '', clean_id)
+    clean_id = re.sub(r'[.+]', '', clean_id)
     return clean_id

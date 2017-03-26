@@ -39,3 +39,7 @@ class TestSanitizeEmailLocalPart(GAETestMixin):
         assert sanitize_email_local_part('B98765432  ') == 'b98765432'
         assert sanitize_email_local_part('B98765432\t') == 'b98765432'
         assert sanitize_email_local_part('B98765432\n') == 'b98765432'
+
+    def test_id_with_special_characters(self):
+        assert sanitize_email_local_part('B98+765432') == 'b98765432'
+        assert sanitize_email_local_part('B98.765432') == 'b98765432'
